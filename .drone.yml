@@ -1,0 +1,11 @@
+workspace:
+  base: /go
+  path: src/github.com/makii42/gottaw
+
+pipeline:
+  build:
+    image: golang
+    commands: 
+      - go get -v -t .
+      - go build -v .
+      - go test -v ./...
