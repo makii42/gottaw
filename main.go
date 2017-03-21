@@ -1,8 +1,8 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,15 +10,21 @@ import (
 
 	"strings"
 
+	c "github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
 	"github.com/ianschenck/envflag"
 	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
 )
 
-const (
-	DEFAULT_FILE_NAME = "./.gottaw.yml"
-)
+var success, notices, triggers, errors *c.Color
+
+func init() {
+	success = c.New(c.FgGreen)
+	notices = c.New(c.FgBlue)
+	triggers = c.New(c.FgYellow)
+	errors = c.New(c.FgHiRed)
+}
 
 func main() {
 	envflag.Parse()
@@ -41,7 +47,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "d, delay",
-			Value: "800ms",
+			Value: "1500ms",
 			Usage: "Delay of the pipeline action after event",
 		},
 	}
@@ -53,19 +59,13 @@ func main() {
 func WatchIt(c *cli.Context) error {
 	var cfg *Config
 
-	if c.IsSet("config") {
-		if parsed, err := parseConfig(c.String("config")); err != nil {
-			panic(err)
-		} else {
-			cfg = parsed
-		}
-	} else if _, err := os.Stat(DEFAULT_FILE_NAME); err == nil {
-		log.Printf("Using default config from %s", DEFAULT_FILE_NAME)
-		if parsed, err := parseConfig(DEFAULT_FILE_NAME); err != nil {
-			panic(err)
-		} else {
-			cfg = parsed
-		}
+	configFile := c.String("config")
+	if parsed, err := parseConfig(configFile); err != nil {
+		panic(err)
+	} else if parsed == nil {
+		panic(fmt.Errorf("parsed config is empty: '%s'", configFile))
+	} else {
+		cfg = parsed
 	}
 	delay, err := time.ParseDuration(c.String("delay"))
 	if err != nil {
@@ -93,7 +93,7 @@ func WatchIt(c *cli.Context) error {
 				} else if ignore {
 					continue
 				}
-				log.Printf("event: %#v", ev)
+				triggers.Printf("event: %#v\n", ev)
 				if timer == nil {
 					timer = time.AfterFunc(delay, createAction(ev, cfg.Pipeline, func() {
 						timer = nil
@@ -103,7 +103,7 @@ func WatchIt(c *cli.Context) error {
 				}
 
 			case err := <-watcher.Errors:
-				log.Println("error:", err)
+				errors.Printf("error: %v\n", err)
 			}
 		}
 
@@ -114,7 +114,7 @@ func WatchIt(c *cli.Context) error {
 	} else if err := watchDirRecursive(f.Name(), watcher, watchlist, cfg); err != nil {
 		panic(err)
 	}
-	log.Printf("Watchlist those folders: %v", watchlist)
+	notices.Printf("Watchlist those folders: %v\n", watchlist)
 	<-done
 
 	return nil
@@ -147,19 +147,32 @@ func watchDirRecursive(dir string, watcher *fsnotify.Watcher, watchlist Watchlis
 
 func createAction(ev fsnotify.Event, pipeline []string, cleanup func()) func() {
 	return func() {
+		start := time.Now()
 		for i, commandStr := range pipeline {
-			log.Printf(">> (%d) '%s'\n", i, commandStr)
 			elements := strings.Split(commandStr, " ")
-			commandStr, elements = elements[0], elements[1:]
-			cmd := exec.Command(commandStr, elements...)
+			command, elements := elements[0], elements[1:]
+			cmd := exec.Command(command, elements...)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
-			if err := cmd.Run(); err != nil {
-				log.Printf("<< (%d) ERROR!!! \n", i)
+			err := cmd.Start()
+			pid := cmd.Process.Pid
+			if err != nil {
+				errors.Printf("🚨  (%d@%d) ERROR starting '%s': %v", i, pid, commandStr, err)
 				break
 			}
-			log.Printf("<< (%d) done\n", i)
+			notices.Printf("♻️  (%d@%d) started '%s'\n", i, pid, commandStr)
+			if err := cmd.Wait(); err != nil {
+				if exitErr, ok := err.(*exec.ExitError); ok {
+					errors.Printf("🚨  (%d@%d) ERROR: %#v", i, pid, exitErr.ProcessState)
+				} else {
+					errors.Printf("🚨  (%d@%d) ERROR: %#v \n", i, pid, err)
+				}
+			}
+
+			notices.Printf("♻️  (%d@%d) done\n", i, pid)
 		}
+		dur := time.Since(start)
+		success.Printf("✅  Pipeline done after %s\n", dur.String())
 		cleanup()
 	}
 }
