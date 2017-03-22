@@ -27,7 +27,6 @@ func init() {
 
 func main() {
 	app := cli.NewApp()
-
 	app.Name = "gotta watch"
 	app.Usage = "Run command(s) when files in the folder change."
 	app.Action = WatchIt
@@ -49,89 +48,96 @@ func main() {
 			Usage: "Delay of the pipeline action after event",
 		},
 	}
-
 	app.Run(os.Args)
 }
 
 // WatchIt does the work
 func WatchIt(c *cli.Context) error {
-	var cfg *Config
+	cfg, delay := setup(c)
+	tracker := NewTracker(cfg)
+	defer tracker.Close()
 
-	configFile := c.String("config")
-	if parsed, err := parseConfig(configFile); err != nil {
-		panic(err)
-	} else if parsed == nil {
-		panic(fmt.Errorf("🚨  parsed config is empty: '%s'", configFile))
-	} else {
-		cfg = parsed
-	}
-	delay, err := time.ParseDuration(c.String("delay"))
+	trackingRoot, err := filepath.Abs(c.String("folder"))
 	if err != nil {
+		errors.Printf("🚨  problem with your folder: '%s'", c.String("folder"))
 		panic(err)
 	}
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		panic(err)
+	if _, err := os.Stat(trackingRoot); err != nil {
+		errors.Printf("🚨  problem with your folder: '%s'", c.String("folder"))
 	}
-	defer watcher.Close()
-
-	watchlist := make(Watchlist)
 
 	done := make(chan bool)
 	go func() {
 		var timer *time.Timer
 		for {
 			select {
-			case ev := <-watcher.Events:
-				if ev.Op&fsnotify.Chmod == fsnotify.Chmod {
+			case ev := <-tracker.Events():
+				if ev.Op&fsnotify.Chmod == fsnotify.Chmod { // couldn't care less
 					continue
 				}
-				if ignore, err := isIgnored(ev.Name, cfg); err != nil {
-					panic(err)
-				} else if ignore {
+				if isIgnored(ev.Name, cfg) {
 					continue
 				}
+				if ev.Op&fsnotify.Create == fsnotify.Create {
+					if _, err := os.Stat(ev.Name); err != nil {
+						panic(err)
+					} else {
+						tracker.Add(ev.Name)
+						triggers.Printf(
+							"🔭  added '%s', now watching %d folders\n",
+							ev.Name,
+							len(tracker.Tracked()),
+						)
+					}
+				} else if ev.Op&fsnotify.Remove == fsnotify.Remove {
+					if tracker.IsTracked(ev.Name) {
+						tracker.Remove(ev.Name)
+						triggers.Printf(
+							"🔭  removed '%s', now watching %d folders\n",
+							ev.Name,
+							len(tracker.Tracked()),
+						)
+					}
+				}
+
 				if timer == nil {
 					triggers.Printf("🔎  change detected: %s\n", ev.Name)
-					timer = time.AfterFunc(delay, createAction(ev, cfg.Pipeline, func() {
+					timer = time.AfterFunc(delay, executePipeline(cfg.Pipeline, func() {
 						timer = nil
 					}))
 				} else if timer != nil {
 					triggers.Printf("🔎  even more changes detected: %s\n", ev.Name)
+					if !timer.Stop() {
+						<-timer.C
+					}
 					timer.Reset(delay)
 				}
 
-			case err := <-watcher.Errors:
+			case err := <-tracker.Errors():
 				errors.Printf("error: %v\n", err)
 			}
 		}
-
 	}()
 
-	if f, err := os.Stat(c.String("folder")); err != nil {
-		panic(err)
-	} else if err := watchDirRecursive(f.Name(), watcher, watchlist, cfg); err != nil {
+	if err := watchDirRecursive(trackingRoot, tracker, cfg); err != nil {
 		panic(err)
 	}
-	notices.Printf("watching %d folders: %#v\n", len(watchlist), watchlist)
+	notices.Printf("🔭  watching %d folders. %#v\n", len(tracker.Tracked()), tracker.Tracked())
+	executePipeline(cfg.Pipeline, func() {})()
 	<-done
-
 	return nil
 }
 
-func watchDirRecursive(dir string, watcher *fsnotify.Watcher, watchlist Watchlist, cfg *Config) error {
+func watchDirRecursive(dir string, tracker *Tracker, cfg *Config) error {
 	var recorder filepath.WalkFunc = func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if info.IsDir() {
-			if ignored, err := isIgnored(path, cfg); err != nil {
+			if ignored := isIgnored(path, cfg); err != nil {
 				return err
 			} else if !ignored {
-				watchlist[path] = true
-				if err := watcher.Add(path); err != nil {
-					return err
-				}
+				tracker.Add(path)
 			} else {
 				return filepath.SkipDir
 			}
@@ -142,7 +148,7 @@ func watchDirRecursive(dir string, watcher *fsnotify.Watcher, watchlist Watchlis
 	return err
 }
 
-func createAction(ev fsnotify.Event, pipeline []string, cleanup func()) func() {
+func executePipeline(pipeline []string, cleanup func()) func() {
 	return func() {
 		start := time.Now()
 		for i, commandStr := range pipeline {
@@ -164,6 +170,7 @@ func createAction(ev fsnotify.Event, pipeline []string, cleanup func()) func() {
 				} else {
 					errors.Printf("🚨  (%d@%d) ERROR: %#v \n", i, pid, err)
 				}
+				break
 			}
 
 			notices.Printf("♻️  (%d@%d) done\n", i, pid)
@@ -174,15 +181,26 @@ func createAction(ev fsnotify.Event, pipeline []string, cleanup func()) func() {
 	}
 }
 
-func isIgnored(f string, cfg *Config) (bool, error) {
+func isIgnored(f string, cfg *Config) bool {
+	f, err := filepath.Abs(f)
+	if err != nil {
+		errors.Printf("🚨  Please check your excludes in your config: '%s'", f)
+		panic(err)
+	}
 	for _, exclude := range cfg.Excludes {
-		if ignore, err := filepath.Match(exclude, f); err != nil {
-			return false, err
+		absExclude, err := filepath.Abs(exclude)
+		if err != nil {
+			errors.Printf("🚨  Please check your excludes in your config: '%s'", exclude)
+			panic(err)
+		}
+		if ignore, err := filepath.Match(absExclude, f); err != nil {
+			errors.Printf("🚨  Please check your excludes in your config: '%s'", exclude)
+			panic(err)
 		} else if ignore {
-			return true, nil
+			return true
 		}
 	}
-	return false, nil
+	return false
 }
 
 func parseConfig(cfgFile string) (*Config, error) {
@@ -203,4 +221,17 @@ type Config struct {
 	Pipeline []string `yaml:"pipeline"`
 }
 
-type Watchlist map[string]bool
+func setup(c *cli.Context) (*Config, time.Duration) {
+	configFile := c.String("config")
+	parsed, err := parseConfig(configFile)
+	if err != nil {
+		panic(err)
+	} else if parsed == nil {
+		panic(fmt.Errorf("🚨  parsed config is empty: '%s'", configFile))
+	}
+	delay, err := time.ParseDuration(c.String("delay"))
+	if err != nil {
+		panic(err)
+	}
+	return parsed, delay
+}

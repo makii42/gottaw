@@ -7,32 +7,27 @@ import (
 )
 
 func TestIsIgnoreWorksAsExpected(t *testing.T) {
-	ignored, err := isIgnored("./foo.go", cfgExcludes("bla.go"))
-	assert.Nil(t, err)
+	ignored := isIgnored("./foo.go", cfgExcludes("bla.go"))
 	assert.False(t, ignored)
 }
 
 func TestIsIgnoreIgnoresPlainFile(t *testing.T) {
-	ignored, err := isIgnored("/bla", cfgExcludes("\\/bla"))
-	assert.Nil(t, err)
+	ignored := isIgnored("/bla", cfgExcludes("/bla"))
 	assert.True(t, ignored)
 }
 func TestIsIgnoreIgnoresSuffix(t *testing.T) {
-	ignored, err := isIgnored("foo.bla", cfgExcludes("*bla"))
-	assert.Nil(t, err)
+	ignored := isIgnored("foo.bla", cfgExcludes("*bla"))
 	assert.True(t, ignored)
 }
 
 func TestIsIgnoreIgnoresAllInDir(t *testing.T) {
-	ignored, err := isIgnored("./.git/hooks", cfgExcludes("./.git/**"))
-	assert.Nil(t, err)
+	ignored := isIgnored("./.git/hooks", cfgExcludes("./.git/**"))
 	assert.True(t, ignored)
 }
 
 func TestIsIgnoreIgnoresAllInGitAsWeDontHaveDoubleStar(t *testing.T) {
 	c := cfgExcludes("./.git/*/*")
-	ignored, err := isIgnored("./.git/hooks/bas", c)
-	assert.Nil(t, err)
+	ignored := isIgnored("./.git/hooks/bas", c)
 	assert.True(t, ignored)
 }
 
