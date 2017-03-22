@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -17,6 +16,7 @@ import (
 )
 
 var success, notices, triggers, errors *c.Color
+var cfg Config
 
 func init() {
 	success = c.New(c.FgGreen)
@@ -53,8 +53,8 @@ func main() {
 
 // WatchIt does the work
 func WatchIt(c *cli.Context) error {
-	cfg, delay := setup(c)
-	tracker := NewTracker(cfg)
+	delay := setup(c)
+	tracker := NewTracker(&cfg)
 	defer tracker.Close()
 
 	trackingRoot, err := filepath.Abs(c.String("folder"))
@@ -75,13 +75,13 @@ func WatchIt(c *cli.Context) error {
 				if ev.Op&fsnotify.Chmod == fsnotify.Chmod { // couldn't care less
 					continue
 				}
-				if isIgnored(ev.Name, cfg) {
+				if isIgnored(ev.Name, &cfg) {
 					continue
 				}
 				if ev.Op&fsnotify.Create == fsnotify.Create {
-					if _, err := os.Stat(ev.Name); err != nil {
+					if newFile, err := os.Stat(ev.Name); err != nil {
 						panic(err)
-					} else {
+					} else if newFile.IsDir() {
 						tracker.Add(ev.Name)
 						triggers.Printf(
 							"🔭  added '%s', now watching %d folders\n",
@@ -98,10 +98,13 @@ func WatchIt(c *cli.Context) error {
 							len(tracker.Tracked()),
 						)
 					}
-				}
-
-				if timer == nil {
+				} else if ev.Op&fsnotify.Write == fsnotify.Write && cfg.File == ev.Name {
+					parseConfig(cfg.File)
+					triggers.Printf("🛠  reloaded config '%s'\n", cfg.File)
+				} else {
 					triggers.Printf("🔎  change detected: %s\n", ev.Name)
+				}
+				if timer == nil {
 					timer = time.AfterFunc(delay, executePipeline(cfg.Pipeline, func() {
 						timer = nil
 					}))
@@ -119,7 +122,7 @@ func WatchIt(c *cli.Context) error {
 		}
 	}()
 
-	if err := watchDirRecursive(trackingRoot, tracker, cfg); err != nil {
+	if err := watchDirRecursive(trackingRoot, tracker, &cfg); err != nil {
 		panic(err)
 	}
 	notices.Printf("🔭  watching %d folders. %#v\n", len(tracker.Tracked()), tracker.Tracked())
@@ -203,35 +206,37 @@ func isIgnored(f string, cfg *Config) bool {
 	return false
 }
 
-func parseConfig(cfgFile string) (*Config, error) {
-	var cfg Config
+func parseConfig(cfgFile string) error {
 	source, err := ioutil.ReadFile(cfgFile)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if err := yaml.Unmarshal(source, &cfg); err != nil {
-		return nil, err
+		return err
 	}
-	return &cfg, nil
+	cfg.File = cfgFile
+	return nil
 }
 
 // Config is the root config object
 type Config struct {
+	File     string
 	Excludes []string `yaml:"excludes"`
 	Pipeline []string `yaml:"pipeline"`
 }
 
-func setup(c *cli.Context) (*Config, time.Duration) {
-	configFile := c.String("config")
-	parsed, err := parseConfig(configFile)
+func setup(c *cli.Context) time.Duration {
+	configFile, err := filepath.Abs(c.String("config"))
 	if err != nil {
 		panic(err)
-	} else if parsed == nil {
-		panic(fmt.Errorf("🚨  parsed config is empty: '%s'", configFile))
+	}
+	err = parseConfig(configFile)
+	if err != nil {
+		panic(err)
 	}
 	delay, err := time.ParseDuration(c.String("delay"))
 	if err != nil {
 		panic(err)
 	}
-	return parsed, delay
+	return delay
 }
