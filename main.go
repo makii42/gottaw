@@ -63,7 +63,7 @@ func WatchIt(c *cli.Context) error {
 	if parsed, err := parseConfig(configFile); err != nil {
 		panic(err)
 	} else if parsed == nil {
-		panic(fmt.Errorf("parsed config is empty: '%s'", configFile))
+		panic(fmt.Errorf("🚨  parsed config is empty: '%s'", configFile))
 	} else {
 		cfg = parsed
 	}
@@ -93,7 +93,7 @@ func WatchIt(c *cli.Context) error {
 				} else if ignore {
 					continue
 				}
-				triggers.Printf("event: %#v\n", ev)
+				triggers.Printf("🔎  change detected: %s\n", ev.Name)
 				if timer == nil {
 					timer = time.AfterFunc(delay, createAction(ev, cfg.Pipeline, func() {
 						timer = nil
@@ -114,17 +114,13 @@ func WatchIt(c *cli.Context) error {
 	} else if err := watchDirRecursive(f.Name(), watcher, watchlist, cfg); err != nil {
 		panic(err)
 	}
-	notices.Printf("Watchlist those folders: %v\n", watchlist)
+	notices.Printf("watching %d folders.\n", len(watchlist))
 	<-done
 
 	return nil
 }
 
 func watchDirRecursive(dir string, watcher *fsnotify.Watcher, watchlist Watchlist, cfg *Config) error {
-	watchlist[dir] = true
-	if err := watcher.Add(dir); err != nil {
-		return err
-	}
 	var recorder filepath.WalkFunc = func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
