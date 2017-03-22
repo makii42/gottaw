@@ -12,7 +12,6 @@ import (
 
 	c "github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
-	"github.com/ianschenck/envflag"
 	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
 )
@@ -27,7 +26,6 @@ func init() {
 }
 
 func main() {
-	envflag.Parse()
 	app := cli.NewApp()
 
 	app.Name = "gotta watch"
