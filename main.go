@@ -9,21 +9,13 @@ import (
 
 	"strings"
 
-	c "github.com/fatih/color"
 	"github.com/fsnotify/fsnotify"
 	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
 )
 
-var success, notices, triggers, errors *c.Color
 var cfg Config
-
-func init() {
-	success = c.New(c.FgGreen)
-	notices = c.New(c.FgBlue)
-	triggers = c.New(c.FgYellow)
-	errors = c.New(c.FgHiRed)
-}
+var l *Logger
 
 func main() {
 	app := cli.NewApp()
@@ -47,6 +39,10 @@ func main() {
 			Value: "1500ms",
 			Usage: "Delay of the pipeline action after event",
 		},
+		cli.BoolFlag{
+			Name:  "g, growl",
+			Usage: "Notify OS via growl about pipeline result",
+		},
 	}
 	app.Run(os.Args)
 }
@@ -55,15 +51,16 @@ func main() {
 func WatchIt(c *cli.Context) error {
 	delay := setup(c)
 	tracker := NewTracker(&cfg)
+	l = NewLogger(&cfg)
 	defer tracker.Close()
 
 	trackingRoot, err := filepath.Abs(c.String("folder"))
 	if err != nil {
-		errors.Printf("🚨  problem with your folder: '%s'", c.String("folder"))
+		l.Errorf("🚨  problem with your folder: '%s'", c.String("folder"))
 		panic(err)
 	}
 	if _, err := os.Stat(trackingRoot); err != nil {
-		errors.Printf("🚨  problem with your folder: '%s'", c.String("folder"))
+		l.Errorf("🚨  problem with your folder: '%s'", c.String("folder"))
 	}
 
 	done := make(chan bool)
@@ -83,41 +80,37 @@ func WatchIt(c *cli.Context) error {
 						panic(err)
 					} else if newFile.IsDir() {
 						tracker.Add(ev.Name)
-						triggers.Printf(
+						l.Triggerf(
 							"🔭  added '%s', now watching %d folders\n",
 							ev.Name,
 							len(tracker.Tracked()),
 						)
 					}
-				} else if ev.Op&fsnotify.Remove == fsnotify.Remove {
-					if tracker.IsTracked(ev.Name) {
-						tracker.Remove(ev.Name)
-						triggers.Printf(
-							"🔭  removed '%s', now watching %d folders\n",
-							ev.Name,
-							len(tracker.Tracked()),
-						)
-					}
+				} else if ev.Op&fsnotify.Remove == fsnotify.Remove && tracker.IsTracked(ev.Name) {
+					tracker.Remove(ev.Name)
+					l.Triggerf(
+						"🔭  removed '%s', now watching %d folders\n",
+						ev.Name,
+						len(tracker.Tracked()),
+					)
 				} else if ev.Op&fsnotify.Write == fsnotify.Write && cfg.File == ev.Name {
 					parseConfig(cfg.File)
-					triggers.Printf("🛠  reloaded config '%s'\n", cfg.File)
+					l.Triggerf("🛠  reloaded config '%s'\n", cfg.File)
 				} else {
-					triggers.Printf("🔎  change detected: %s\n", ev.Name)
+					l.Triggerf("🔎  change detected: %s\n", ev.Name)
 				}
-				if timer == nil {
+
+				if timer != nil {
+					l.Triggerf("🔎  even more changes detected: %s\n", ev.Name)
+					timer.Reset(delay)
+				} else {
 					timer = time.AfterFunc(delay, executePipeline(cfg.Pipeline, func() {
 						timer = nil
 					}))
-				} else if timer != nil {
-					triggers.Printf("🔎  even more changes detected: %s\n", ev.Name)
-					if !timer.Stop() {
-						<-timer.C
-					}
-					timer.Reset(delay)
 				}
 
 			case err := <-tracker.Errors():
-				errors.Printf("error: %v\n", err)
+				l.Errorf("error: %v\n", err)
 			}
 		}
 	}()
@@ -125,7 +118,7 @@ func WatchIt(c *cli.Context) error {
 	if err := watchDirRecursive(trackingRoot, tracker, &cfg); err != nil {
 		panic(err)
 	}
-	notices.Printf("🔭  watching %d folders. %#v\n", len(tracker.Tracked()), tracker.Tracked())
+	l.Noticef("🔭  watching %d folder(s). %s\n", len(tracker.Tracked()), tracker.Tracked())
 	executePipeline(cfg.Pipeline, func() {})()
 	<-done
 	return nil
@@ -163,23 +156,19 @@ func executePipeline(pipeline []string, cleanup func()) func() {
 			err := cmd.Start()
 			pid := cmd.Process.Pid
 			if err != nil {
-				errors.Printf("🚨  (%d@%d) ERROR starting '%s': %v", i, pid, commandStr, err)
-				break
+				l.Errorf("🚨  (%d@%d) ERROR starting '%s': %v", i, pid, commandStr, err)
+				return
 			}
-			notices.Printf("♻️  (%d@%d) started '%s'\n", i, pid, commandStr)
+			l.Noticef("♻️  (%d@%d) started '%s'\n", i, pid, commandStr)
 			if err := cmd.Wait(); err != nil {
-				if exitErr, ok := err.(*exec.ExitError); ok {
-					errors.Printf("🚨  (%d@%d) ERROR: %#v", i, pid, exitErr.ProcessState)
-				} else {
-					errors.Printf("🚨  (%d@%d) ERROR: %#v \n", i, pid, err)
-				}
-				break
+				l.Errorf("🚨  (%d@%d) ERROR: %s \n", i, pid, err)
+				return
 			}
 
-			notices.Printf("♻️  (%d@%d) done\n", i, pid)
+			l.Noticef("♻️  (%d@%d) done\n", i, pid)
 		}
 		dur := time.Since(start)
-		success.Printf("✅  Pipeline done after %s\n", dur.String())
+		l.Successf("✅  Pipeline done after %s\n", dur.String())
 		cleanup()
 	}
 }
@@ -187,17 +176,17 @@ func executePipeline(pipeline []string, cleanup func()) func() {
 func isIgnored(f string, cfg *Config) bool {
 	f, err := filepath.Abs(f)
 	if err != nil {
-		errors.Printf("🚨  Please check your excludes in your config: '%s'", f)
+		l.Errorf("🚨  Please check your excludes in your config: '%s'", f)
 		panic(err)
 	}
 	for _, exclude := range cfg.Excludes {
 		absExclude, err := filepath.Abs(exclude)
 		if err != nil {
-			errors.Printf("🚨  Please check your excludes in your config: '%s'", exclude)
+			l.Errorf("🚨  Please check your excludes in your config: '%s'", exclude)
 			panic(err)
 		}
 		if ignore, err := filepath.Match(absExclude, f); err != nil {
-			errors.Printf("🚨  Please check your excludes in your config: '%s'", exclude)
+			l.Errorf("🚨  Please check your excludes in your config: '%s'", exclude)
 			panic(err)
 		} else if ignore {
 			return true
@@ -223,6 +212,7 @@ type Config struct {
 	File     string
 	Excludes []string `yaml:"excludes"`
 	Pipeline []string `yaml:"pipeline"`
+	Growl    bool     `yaml:"growl"`
 }
 
 func setup(c *cli.Context) time.Duration {

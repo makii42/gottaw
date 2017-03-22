@@ -26,6 +26,7 @@ Obviously it still needs a LOT of polish. What's on my agenda:
 - [x] Improve Globbing, e.g. .git/**
 - [x] Auto-Track addition and removal of folders
 - [x] Auto-Reload config if config file is changed
+- [x] Growl support
 - [ ] Pre-define sensible defaults for various setups (go, node, ... )
 
 PRs Welcome!
