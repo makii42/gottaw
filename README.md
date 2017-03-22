@@ -13,13 +13,9 @@ So, check out the [.gottaw.yml](https://github.com/makii42/gottaw/blob/master/.g
     excludes:
       - gottaw
       - .git
-      - .git/*
-      - .git/*/*
-      - .git/*/*/*
       - .vscode
-      - .vscode/*
     pipeline: 
-      - go build -v ./...
+      - go build -v .
       - go test -v ./... 
       - go install
 
