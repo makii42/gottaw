@@ -91,12 +91,13 @@ func WatchIt(c *cli.Context) error {
 				} else if ignore {
 					continue
 				}
-				triggers.Printf("🔎  change detected: %s\n", ev.Name)
 				if timer == nil {
+					triggers.Printf("🔎  change detected: %s\n", ev.Name)
 					timer = time.AfterFunc(delay, createAction(ev, cfg.Pipeline, func() {
 						timer = nil
 					}))
 				} else if timer != nil {
+					triggers.Printf("🔎  even more changes detected: %s\n", ev.Name)
 					timer.Reset(delay)
 				}
 
@@ -112,7 +113,7 @@ func WatchIt(c *cli.Context) error {
 	} else if err := watchDirRecursive(f.Name(), watcher, watchlist, cfg); err != nil {
 		panic(err)
 	}
-	notices.Printf("watching %d folders.\n", len(watchlist))
+	notices.Printf("watching %d folders: %#v\n", len(watchlist), watchlist)
 	<-done
 
 	return nil
@@ -131,6 +132,8 @@ func watchDirRecursive(dir string, watcher *fsnotify.Watcher, watchlist Watchlis
 				if err := watcher.Add(path); err != nil {
 					return err
 				}
+			} else {
+				return filepath.SkipDir
 			}
 		}
 		return nil
@@ -176,11 +179,9 @@ func isIgnored(f string, cfg *Config) (bool, error) {
 		if ignore, err := filepath.Match(exclude, f); err != nil {
 			return false, err
 		} else if ignore {
-			//log.Printf("ignoring %s because of %s", f, exclude)
 			return true, nil
 		}
 	}
-	//log.Printf("not ignoring %s for %v", f, cfg.Excludes)
 	return false, nil
 }
 

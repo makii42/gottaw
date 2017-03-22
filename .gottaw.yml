@@ -1,12 +1,7 @@
 excludes:
   - gottaw
   - .git
-  - .git/*
-  - .git/*/*
-  - .git/*/*/*
-  - .git/*/*/*/*
   - .vscode
-  - .vscode/*
   - .gitrecinfo
   - gottaw-go-tmp-umask
 pipeline: 
