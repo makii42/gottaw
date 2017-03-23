@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/urfave/cli"
-	"gopkg.in/yaml.v2"
 )
 
 var cfg Config
@@ -153,6 +151,9 @@ func executePipeline(pipeline []string, cleanup func()) func() {
 			cmd := exec.Command(command, elements...)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
+			if cfg.WorkingDirectory != "" {
+				cmd.Dir = cfg.WorkingDirectory
+			}
 			err := cmd.Start()
 			pid := cmd.Process.Pid
 			if err != nil {
@@ -193,40 +194,4 @@ func isIgnored(f string, cfg *Config) bool {
 		}
 	}
 	return false
-}
-
-func parseConfig(cfgFile string) error {
-	source, err := ioutil.ReadFile(cfgFile)
-	if err != nil {
-		return err
-	}
-	if err := yaml.Unmarshal(source, &cfg); err != nil {
-		return err
-	}
-	cfg.File = cfgFile
-	return nil
-}
-
-// Config is the root config object
-type Config struct {
-	File     string
-	Excludes []string `yaml:"excludes"`
-	Pipeline []string `yaml:"pipeline"`
-	Growl    bool     `yaml:"growl"`
-}
-
-func setup(c *cli.Context) time.Duration {
-	configFile, err := filepath.Abs(c.String("config"))
-	if err != nil {
-		panic(err)
-	}
-	err = parseConfig(configFile)
-	if err != nil {
-		panic(err)
-	}
-	delay, err := time.ParseDuration(c.String("delay"))
-	if err != nil {
-		panic(err)
-	}
-	return delay
 }
