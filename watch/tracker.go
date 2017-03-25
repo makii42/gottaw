@@ -1,16 +1,17 @@
-package main
+package watch
 
 import (
 	"github.com/fsnotify/fsnotify"
+	c "github.com/makii42/gottaw/config"
 )
 
 type Tracker struct {
 	tracked map[string]bool
 	watcher *fsnotify.Watcher
-	cfg     *Config
+	cfg     *c.Config
 }
 
-func NewTracker(cfg *Config) *Tracker {
+func NewTracker(cfg *c.Config) *Tracker {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		panic(err)

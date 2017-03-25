@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"io/ioutil"
@@ -18,30 +18,31 @@ type Config struct {
 	Growl            bool     `yaml:"growl"`
 }
 
-func setup(c *cli.Context) time.Duration {
-	configFile, err := filepath.Abs(c.String("config"))
+func Setup(c *cli.Context) (*Config, time.Duration) {
+	configFile, err := filepath.Abs(c.GlobalString("config"))
 	if err != nil {
 		panic(err)
 	}
-	err = parseConfig(configFile)
+	cfg, err := ParseConfig(configFile)
 	if err != nil {
 		panic(err)
 	}
-	delay, err := time.ParseDuration(c.String("delay"))
+	delay, err := time.ParseDuration(c.GlobalString("delay"))
 	if err != nil {
 		panic(err)
 	}
-	return delay
+	return cfg, delay
 }
 
-func parseConfig(cfgFile string) error {
+func ParseConfig(cfgFile string) (*Config, error) {
 	source, err := ioutil.ReadFile(cfgFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	var cfg Config
 	if err := yaml.Unmarshal(source, &cfg); err != nil {
-		return err
+		return nil, err
 	}
 	cfg.File = cfgFile
-	return nil
+	return &cfg, nil
 }

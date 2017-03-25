@@ -1,8 +1,9 @@
-package main
+package watch
 
 import (
 	"testing"
 
+	"github.com/makii42/gottaw/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,8 +32,8 @@ func TestIsIgnoreIgnoresAllInGitAsWeDontHaveDoubleStar(t *testing.T) {
 	assert.True(t, ignored)
 }
 
-func cfgExcludes(excludes ...string) *Config {
-	return &Config{
+func cfgExcludes(excludes ...string) *config.Config {
+	return &config.Config{
 		Excludes: excludes,
 	}
 }

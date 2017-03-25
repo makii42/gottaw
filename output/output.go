@@ -1,19 +1,20 @@
-package main
+package output
 
 import (
 	"fmt"
 
 	n "github.com/0xAX/notificator"
 	"github.com/fatih/color"
+	c "github.com/makii42/gottaw/config"
 )
 
 type Logger struct {
-	cfg                                *Config
+	cfg                                *c.Config
 	errors, notices, triggers, success *color.Color
 	n                                  *n.Notificator
 }
 
-func NewLogger(cfg *Config) *Logger {
+func NewLogger(cfg *c.Config) *Logger {
 	l := Logger{
 		cfg:      cfg,
 		errors:   color.New(color.FgHiRed),
@@ -43,7 +44,7 @@ func (l *Logger) Successf(format string, a ...interface{}) {
 }
 
 func (l *Logger) growl(title, msg, icon, urgency string) {
-	if cfg.Growl {
+	if l.cfg.Growl {
 		if l.n == nil {
 			l.n = makeNotificator()
 		}
