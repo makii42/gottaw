@@ -53,15 +53,15 @@ func WatchIt(c *cli.Context) error {
 					continue
 				}
 				if ev.Op&fsnotify.Create == fsnotify.Create {
-					if newFile, err := os.Stat(ev.Name); err != nil {
-						panic(err)
-					} else if newFile.IsDir() {
-						tracker.Add(ev.Name)
-						l.Triggerf(
-							"🔭  added '%s', now watching %d folders\n",
-							ev.Name,
-							len(tracker.Tracked()),
-						)
+					if newFile, err := os.Stat(ev.Name); err == nil {
+						if newFile.IsDir() {
+							tracker.Add(ev.Name)
+							l.Triggerf(
+								"🔭  added '%s', now watching %d folders\n",
+								ev.Name,
+								len(tracker.Tracked()),
+							)
+						}
 					}
 				} else if ev.Op&fsnotify.Remove == fsnotify.Remove && tracker.IsTracked(ev.Name) {
 					tracker.Remove(ev.Name)
