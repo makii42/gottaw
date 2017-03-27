@@ -1,37 +1,41 @@
 package defaults
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"io/ioutil"
 
 	c "github.com/makii42/gottaw/config"
 	"github.com/makii42/gottaw/output"
 	"github.com/urfave/cli"
 )
 
-var guesser DefaultGuesser
-var l *output.Logger
-
-func init() {
-	l = output.NewLogger(&c.Config{})
-	guesser = DefaultGuesser{
-		GolangDefault{},
-		NodeYarnDefault{},
-		NodeNpmDefault{},
-		JavaMavenDefault{},
-	}
-}
-
 var DefaultsCmd = cli.Command{
 	Name:   "defaults",
 	Usage:  "Prints and optionally writes the defaults for a folder",
 	Action: defaults,
-	Flags:  []cli.Flag{},
+	Flags: []cli.Flag{
+		cli.BoolFlag{
+			Name:  "w, write",
+			Usage: "Writes default config to set configuration file or default location.",
+		},
+	},
 }
 
 func defaults(cli *cli.Context) {
+	conf := &c.Config{}
+	trace := cli.GlobalBool("trace")
+	var l *output.Logger
+	if trace {
+		l = output.NewLogger(output.TRACE, conf)
+	} else {
+		l = output.NewLogger(output.NOTICE, conf)
+	}
 	configFile, err := filepath.Abs(cli.GlobalString("config"))
 	if err != nil {
 		panic(err)
@@ -50,22 +54,50 @@ func defaults(cli *cli.Context) {
 	}
 	if dir.IsDir() {
 		l.Noticef("🔬  evaluating %s\n", rootDir)
-		def := guesser.Find(rootDir)
+		def := GuessDefault(rootDir, l)
 		if def != nil {
 			l.Successf("🎯  Identified default %s\n", def.Name())
+			if cli.Bool("write") {
+				data, err := c.SerializeConfig(def.Config())
+				if err != nil {
+					log.Fatalf("error serializing default: %s", err)
+				}
+				fmt.Printf(
+					"Default config for %s:\n===\n%s===\nWrite to '%s'? [y/N] ",
+					def.Name(),
+					string(data),
+					cli.GlobalString("config"),
+				)
+				reader := bufio.NewReader(os.Stdin)
+				input, _ := reader.ReadString('\n')
+				input = strings.Trim(input, " \n")
+				if strings.ToLower(input) == "y" {
+					err := ioutil.WriteFile(cli.GlobalString("config"), data, 0660)
+					if err != nil {
+						log.Fatalf("error writing '%s': %s", cli.GlobalString("config"), err)
+					}
+					l.Successf("✅  Okay!\n")
+				} else {
+					l.Noticef("🌮  Okay, never mind!\n")
+				}
+			}
 		} else {
 			l.Errorf("🚫  No known default matched contents of %s\n", rootDir)
-			fmt.Printf("\nAvailable defaults are:\n\n")
-			for _, def := range guesser {
-				fmt.Printf("  - %s\n", def.Name())
-			}
 			fmt.Println("\nFeel free to contribute your default at https://github.com/makii42/gottaw")
 		}
 	}
-
 }
 
-func GuessDefault(path string) Default {
+func GuessDefault(path string, l *output.Logger) Default {
+	util := newDefaultsUtil(l)
+
+	guesser := DefaultGuesser{
+		NewGolangDefault(util),
+		NewNodeYarnDefault(util),
+		NewNodeNpmDefault(util),
+		NewJavaMavenDefault(util),
+	}
+
 	workdir, err := filepath.Abs(path)
 	if err != nil {
 		log.Fatal(err)

@@ -31,6 +31,14 @@ func main() {
 			Usage: "Delay of the pipeline action after event",
 		},
 		cli.BoolFlag{
+			Name:  "t, trace",
+			Usage: "Log more details",
+		},
+		cli.BoolFlag{
+			Name:  "q, quiet",
+			Usage: "Logs nothing but pass-through output and success messages",
+		},
+		cli.BoolFlag{
 			Name:  "g, growl",
 			Usage: "Notify OS via growl about pipeline result",
 		},

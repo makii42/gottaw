@@ -9,61 +9,118 @@ import (
 
 	"fmt"
 
+	"github.com/makii42/gottaw/config"
+	"github.com/makii42/gottaw/output"
 	"github.com/stretchr/testify/assert"
 )
 
-var temp_root string
-var original_path string
+var packageJsonContents = []byte("{name: \"nodepkg\"}")
+var tempRoot string
+var util *defaultsUtil
+var logger *output.Logger
+
+var golang, nodeNpm, nodeYarn, javaMaven Default
 
 func TestMain(m *testing.M) {
+	// deps in trace - YES thats not quiet by default
+	logger = output.NewLogger(output.NOTICE, &config.Config{})
+	util = newDefaultsUtil(logger)
+
+	// test default objects
+	golang = NewGolangDefault(util)
+	nodeNpm = NewNodeNpmDefault(util)
+	nodeYarn = NewNodeYarnDefault(util)
+	javaMaven = NewJavaMavenDefault(util)
+
+	// create and rollback test root directory
 	dir, err := ioutil.TempDir("", "gottaw-test")
-	original_path = os.Getenv("PATH")
 	if err != nil {
 		panic(err)
 	}
-	temp_root = dir
 	defer os.RemoveAll(dir)
+	tempRoot = dir
+
+	// create and rollback path
+	originalPath := os.Getenv("PATH")
+	os.Setenv("PATH", "")
+	fmt.Printf("FIXED PATH '%s'", os.Getenv("PATH"))
+	defer os.Setenv("PATH", originalPath)
+
 	result := m.Run()
-	os.Setenv("PATH", original_path)
 	os.Exit(result)
 }
 
-func TestFileExistsReturnsTrueFile(t *testing.T) {
-	assert.True(t, fileExists(".", "/defaults_test.go"))
-}
-func TestFileExistsReturnsFalseIfFileNotExists(t *testing.T) {
-	assert.False(t, fileExists(".", "/acme.txt"))
-}
-func TestFileExistsReturnsFalseForDirs(t *testing.T) {
-	assert.False(t, fileExists(".", ""))
-}
-
-func TestDirExistsReturnsTrueIfThere(t *testing.T) {
-	assert.True(t, dirExists("."))
-}
-func TestDirExistsReturnsFalseIfNotThere(t *testing.T) {
-	assert.False(t, dirExists("./node_modules"))
-}
-func TestDirExistsReturnsFalseIfFile(t *testing.T) {
-	assert.False(t, dirExists("./defaults_test.go"))
-}
-
 // These tests do ensure the defaults are recognized properly.
-// TODO: I need a way to properly fix up the test environment, as
-// it requires the single binaries to be installed locally.
+// TODO: Take windows into the fold by providing "exe"/"bat" suffixes
+// for tests on windows.
+
+func TestGolangDefault(t *testing.T) {
+	tmpDir := createGolangEnv(t, tempRoot)
+	// positive
+	assert.True(t, golang.Test(tmpDir))
+
+	// negative tests
+	assert.False(t, nodeYarn.Test(tmpDir))
+	assert.False(t, nodeNpm.Test(tmpDir))
+	assert.False(t, javaMaven.Test(tmpDir))
+}
 
 func TestNodeYarnDefault(t *testing.T) {
-	tmpdir, err := ioutil.TempDir(temp_root, "nodeyarn")
+	tmpDir := createNodeYarnEnv(t, tempRoot)
+	// positive
+	assert.True(t, nodeYarn.Test(tmpDir))
+
+	// negative tests
+	assert.False(t, golang.Test(tmpDir))
+	assert.False(t, nodeNpm.Test(tmpDir))
+	assert.False(t, javaMaven.Test(tmpDir))
+}
+
+func TestNodeNpmDefault(t *testing.T) {
+	tmpDir := createNodeNpmEnv(t, tempRoot)
+	// positive
+	assert.True(t, nodeNpm.Test(tmpDir))
+
+	// negative tests
+	assert.False(t, golang.Test(tmpDir))
+	assert.False(t, nodeYarn.Test(tmpDir))
+	assert.False(t, javaMaven.Test(tmpDir))
+}
+
+func createNodeYarnEnv(t *testing.T, tempRoot string) string {
+	tmpDir, err := ioutil.TempDir(tempRoot, "nodeyarn-")
 	if err != nil {
 		t.Fatal("could not create tempdir")
 	}
-	defer os.RemoveAll(tmpdir)
-	addFile(t, tmpdir, "package.json", []byte("{name: \"nodepkg\"}"), 0666)
-	binFolder := addBinFolder(t, tmpdir)
+	addFile(t, tmpDir, "package.json", packageJsonContents, 0666)
+	binFolder := addBinFolder(t, tmpDir)
 	addBin(t, binFolder, "node")
 	addBin(t, binFolder, "yarn")
-	subject := NodeYarnDefault{}
-	assert.True(t, subject.Test(tmpdir))
+	return tmpDir
+}
+
+func createNodeNpmEnv(t *testing.T, tempRoot string) string {
+	tmpDir, err := ioutil.TempDir(tempRoot, "nodenpm-")
+	if err != nil {
+		t.Fatal("could not create temp dir")
+	}
+	addFile(t, tmpDir, "package.json", packageJsonContents, 0666)
+	binFolder := addBinFolder(t, tmpDir)
+	addBin(t, binFolder, "node")
+	addBin(t, binFolder, "npm")
+	return tmpDir
+}
+
+func createGolangEnv(t *testing.T, tempRoot string) string {
+	tmpDir, err := ioutil.TempDir(tempRoot, "golang-")
+	if err != nil {
+		t.Fatal("could not create temp dir")
+	}
+	addFile(t, tmpDir, "main.go", packageJsonContents, 0666)
+	addFile(t, tmpDir, "foobar.go", packageJsonContents, 0666)
+	binFolder := addBinFolder(t, tmpDir)
+	addBin(t, binFolder, "go")
+	return tmpDir
 }
 
 func addFile(t *testing.T, dir string, filename string, contents []byte, perm os.FileMode) {
@@ -89,9 +146,6 @@ func addBinFolder(t *testing.T, dir string) string {
 	if err != nil {
 		t.Fatalf("could not create bin dir %s", binDir)
 	}
-	os.Setenv(
-		"PATH",
-		fmt.Sprintf("%s%s%s", binDir, string(os.PathListSeparator), original_path),
-	)
+	os.Setenv("PATH", binDir)
 	return binDir
 }

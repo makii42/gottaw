@@ -4,19 +4,28 @@ import (
 	c "github.com/makii42/gottaw/config"
 )
 
-type JavaMavenDefault struct{}
+func NewJavaMavenDefault(util *defaultsUtil) *JavaMavenDefault {
+	return &JavaMavenDefault{
+		util: util,
+	}
+}
+
+type JavaMavenDefault struct {
+	util *defaultsUtil
+}
 
 func (j JavaMavenDefault) Name() string {
 	return "Java/Maven"
 }
 func (j JavaMavenDefault) Test(dir string) bool {
-	return fileExists(dir, "pom.xml") &&
-		isExecutable("java") && isExecutable("javac") &&
-		(isExecutable("mvn") || isExecutable("mvn.bat"))
+	j.util.l.Tracef("testing for %s...\n", j.Name())
+	return j.util.fileExists(dir, "pom.xml") &&
+		j.util.isExecutable("java") && j.util.isExecutable("javac") &&
+		(j.util.isExecutable("mvn") || j.util.isExecutable("mvn.bat"))
 }
 func (j JavaMavenDefault) Config() *c.Config {
 	return &c.Config{
-		Excludes: append(defaultExcludes, "target"),
+		Excludes: append(defaultExcludes, "target", "*/target", "*iml"),
 		Pipeline: []string{
 			"mvn clean test",
 		},

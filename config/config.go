@@ -46,3 +46,7 @@ func ParseConfig(cfgFile string) (*Config, error) {
 	cfg.File = cfgFile
 	return &cfg, nil
 }
+
+func SerializeConfig(cfg *Config) ([]byte, error) {
+	return yaml.Marshal(cfg)
+}

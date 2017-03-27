@@ -4,17 +4,24 @@ import (
 	c "github.com/makii42/gottaw/config"
 )
 
-type NodeNpmDefault struct{}
+func NewNodeNpmDefault(defUtil *defaultsUtil) *NodeNpmDefault {
+	return &NodeNpmDefault{util: defUtil}
+}
 
-func (g NodeNpmDefault) Name() string {
+type NodeNpmDefault struct {
+	util *defaultsUtil
+}
+
+func (nn NodeNpmDefault) Name() string {
 	return "NodeJS/npm"
 }
-func (g NodeNpmDefault) Test(dir string) bool {
-	return fileExists(dir, "package.json") &&
-		isExecutable("node") &&
-		isExecutable("npm")
+func (nn NodeNpmDefault) Test(dir string) bool {
+	nn.util.l.Tracef("testing for %s...\n", nn.Name())
+	return nn.util.fileExists(dir, "package.json") &&
+		nn.util.isExecutable("node") &&
+		nn.util.isExecutable("npm")
 }
-func (g NodeNpmDefault) Config() *c.Config {
+func (nn NodeNpmDefault) Config() *c.Config {
 	return &c.Config{
 		Excludes: append(
 			defaultExcludes,

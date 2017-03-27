@@ -21,12 +21,16 @@ So, check out the [.gottaw.yml](https://github.com/makii42/gottaw/blob/master/.g
 
 But, after this burdon, it works pretty well!
 
-Obviously it still needs a LOT of polish. What's on my agenda:
+Some of the recent changes:
 
 - [x] Improve Globbing, e.g. .git/**
 - [x] Auto-Track addition and removal of folders
 - [x] Auto-Reload config if config file is changed
 - [x] Growl support
-- [ ] Pre-define sensible defaults for various setups (go, node, ... )
+- [x] Pre-define sensible defaults for various setups (go, node, ... )
+
+Obviously it still needs a LOT of polish. I don't have a lot on the agenda 
+except optimizations. I'd be especially grateful if someone on Windows 
+takes a look on the build and defaults...
 
 PRs Welcome!

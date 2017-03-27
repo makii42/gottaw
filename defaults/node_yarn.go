@@ -4,15 +4,24 @@ import (
 	c "github.com/makii42/gottaw/config"
 )
 
-type NodeYarnDefault struct{}
+func NewNodeYarnDefault(util *defaultsUtil) *NodeYarnDefault {
+	return &NodeYarnDefault{
+		util: util,
+	}
+}
 
-func (d NodeYarnDefault) Name() string {
+type NodeYarnDefault struct {
+	util *defaultsUtil
+}
+
+func (ny NodeYarnDefault) Name() string {
 	return "NodeJS/yarn"
 }
-func (g NodeYarnDefault) Test(dir string) bool {
-	return fileExists(dir, "package.json") &&
-		isExecutable("node") &&
-		isExecutable("yarn")
+func (ny NodeYarnDefault) Test(dir string) bool {
+	ny.util.l.Tracef("testing for %s...\n", ny.Name())
+	return ny.util.fileExists(dir, "package.json") &&
+		ny.util.isExecutable("node") &&
+		ny.util.isExecutable("yarn")
 }
 func (g NodeYarnDefault) Config() *c.Config {
 	return &c.Config{

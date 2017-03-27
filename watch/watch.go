@@ -25,10 +25,11 @@ var WatchCmd = cli.Command{
 
 // WatchIt does the work
 func WatchIt(c *cli.Context) error {
+
 	var delay time.Duration
 	watchCfg, delay = config.Setup(c)
 	tracker := NewTracker(watchCfg)
-	l = output.NewLogger(watchCfg)
+	l = output.NewLogger(output.TRACE, watchCfg)
 	defer tracker.Close()
 
 	trackingRoot, err := filepath.Abs(c.String("folder"))
@@ -160,12 +161,12 @@ func isIgnored(f string, cfg *config.Config) bool {
 		panic(err)
 	}
 	for _, exclude := range cfg.Excludes {
-		absExclude, err := filepath.Abs(exclude)
+		ude, err := filepath.Abs(exclude)
 		if err != nil {
 			l.Errorf("🚨  Please check your excludes in your config: '%s'", exclude)
 			panic(err)
 		}
-		if ignore, err := filepath.Match(absExclude, f); err != nil {
+		if ignore, err := filepath.Match(ude, f); err != nil {
 			l.Errorf("🚨  Please check your excludes in your config: '%s'", exclude)
 			panic(err)
 		} else if ignore {
