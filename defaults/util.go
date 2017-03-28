@@ -3,6 +3,7 @@ package defaults
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -47,20 +48,13 @@ func (def *defaultsUtil) dirExists(path string) bool {
 	def.l.Traceln(notFoundMsg)
 	return false
 }
-func (def *defaultsUtil) isExecutable(name string) bool {
-	path := os.Getenv("PATH")
-	def.l.Tracef("executable '%s' on PATH? ", name)
-	// find binary in path and ensure it has some x-es
-	for _, dir := range strings.Split(path, string(os.PathListSeparator)) {
-		if file, err := os.Stat(filepath.Join(dir, name)); err == nil &&
-			file.Mode().IsRegular() &&
-			file.Mode().Perm()&0111 != 0 {
-			def.l.Traceln(foundMsg)
+func (def *defaultsUtil) isExecutable(names ...string) bool {
+	for _, name := range names {
+		binPath, err := exec.LookPath(name)
+		if err == nil && binPath != "" {
 			return true
 		}
 	}
-	def.l.Traceln(notFoundMsg)
-
 	return false
 }
 

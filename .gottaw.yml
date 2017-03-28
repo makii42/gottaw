@@ -1,10 +1,9 @@
 growl: true
 excludes:
-  - gottaw
+  - gottaw*
   - .git
   - .vscode
   - .gitrecinfo
-  - gottaw-go-tmp-umask
   - .wercker
 pipeline: 
   - go get -v .

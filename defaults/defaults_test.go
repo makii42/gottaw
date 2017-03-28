@@ -2,6 +2,7 @@ package defaults
 
 import (
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"io/ioutil"
@@ -23,7 +24,7 @@ var golang, nodeNpm, nodeYarn, javaMaven Default
 
 func TestMain(m *testing.M) {
 	// deps in trace - YES thats not quiet by default
-	logger = output.NewLogger(output.NOTICE, &config.Config{})
+	logger = output.NewLogger(output.TRACE, &config.Config{})
 	util = newDefaultsUtil(logger)
 
 	// test default objects
@@ -159,6 +160,9 @@ func addFile(t *testing.T, dir string, filename string, contents []byte, perm os
 }
 
 func addBin(t *testing.T, binFolder string, binName string) {
+	if runtime.GOOS == "windows" {
+		binName = binName + ".exe"
+	}
 	addFile(
 		t,
 		binFolder,
