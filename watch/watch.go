@@ -44,6 +44,7 @@ func WatchIt(c *cli.Context) error {
 	done := make(chan bool)
 	go func() {
 		var timer *time.Timer
+	WatchLoop:
 		for {
 			select {
 			case ev := <-tracker.Events():
@@ -74,6 +75,8 @@ func WatchIt(c *cli.Context) error {
 				} else if ev.Op&fsnotify.Write == fsnotify.Write && watchCfg.File == ev.Name {
 					watchCfg, _ := config.ParseConfig(watchCfg.File)
 					l.Triggerf("🛠  reloaded config '%s'\n", watchCfg.File)
+					go WatchIt(c)
+					break WatchLoop
 				} else {
 					l.Triggerf("🔎  change detected: %s\n", ev.Name)
 				}
