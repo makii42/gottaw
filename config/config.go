@@ -16,6 +16,7 @@ type Config struct {
 	Excludes         []string `yaml:"excludes"`
 	Pipeline         []string `yaml:"pipeline"`
 	Growl            bool     `yaml:"growl"`
+	Server           string   `yaml:"server"`
 }
 
 func Setup(c *cli.Context) (*Config, time.Duration) {
