@@ -11,12 +11,12 @@ import (
 
 // Config is the root config object
 type Config struct {
-	File             string
-	WorkingDirectory string   `yaml:"workdir"`
+	File             string   `yaml:",omitempty"`
+	WorkingDirectory string   `yaml:"workdir,omitempty"`
 	Excludes         []string `yaml:"excludes"`
 	Pipeline         []string `yaml:"pipeline"`
-	Growl            bool     `yaml:"growl"`
-	Server           string   `yaml:"server"`
+	Growl            bool     `yaml:"growl,omitempty"`
+	Server           string   `yaml:"server,omitempty"`
 }
 
 func Setup(c *cli.Context) (*Config, time.Duration) {
