@@ -15,7 +15,6 @@ var defaultExcludes = []string{
 	".hg",
 	".vscode",
 	".idea",
-	".gitrecinfo",
 }
 
 const foundMsg = "✅  found!"
