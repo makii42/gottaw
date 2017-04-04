@@ -22,7 +22,7 @@ of your code and have `gottaw` suggest what language it might be:
 You can generate a default config file by passing an additional `--write` flag:
 
     $ gottaw defaults -w
-    🔬  evaluating /Users/ralfischer/go/src/github.com/diegogub/aranGO
+    🔬  evaluating /home/user/go/src/github.com/makii42/gottaw
     🎯  Identified default Golang
     Default config for Golang:
     ===
