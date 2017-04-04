@@ -58,6 +58,7 @@ func TestGolangDefault(t *testing.T) {
 	tmpDir := createGolangEnv(t, tempRoot)
 	// positive
 	assert.True(t, golang.Test(tmpDir))
+	assert.NotNil(t, golang.Config())
 
 	// negative tests
 	assert.False(t, nodeYarn.Test(tmpDir))
@@ -69,6 +70,7 @@ func TestNodeYarnDefault(t *testing.T) {
 	tmpDir := createNodeYarnEnv(t, tempRoot)
 	// positive
 	assert.True(t, nodeYarn.Test(tmpDir))
+	assert.NotNil(t, nodeYarn.Config())
 
 	// negative tests
 	assert.False(t, golang.Test(tmpDir))
@@ -80,11 +82,24 @@ func TestNodeNpmDefault(t *testing.T) {
 	tmpDir := createNodeNpmEnv(t, tempRoot)
 	// positive
 	assert.True(t, nodeNpm.Test(tmpDir))
+	assert.NotNil(t, nodeNpm.Config())
 
 	// negative tests
 	assert.False(t, golang.Test(tmpDir))
 	assert.False(t, nodeYarn.Test(tmpDir))
 	assert.False(t, javaMaven.Test(tmpDir))
+}
+
+func TestJavaMavenDefault(t *testing.T) {
+	tmpDir := createJavaMvnEnv(t, tempRoot)
+	// positive
+	assert.True(t, javaMaven.Test(tmpDir))
+	assert.NotNil(t, javaMaven.Config())
+
+	// negative
+	assert.False(t, golang.Test(tmpDir))
+	assert.False(t, nodeYarn.Test(tmpDir))
+	assert.False(t, nodeNpm.Test(tmpDir))
 }
 
 func createNodeYarnEnv(t *testing.T, tempRoot string) string {
@@ -120,6 +135,19 @@ func createGolangEnv(t *testing.T, tempRoot string) string {
 	addFile(t, tmpDir, "foobar.go", packageJsonContents, 0666)
 	binFolder := addBinFolder(t, tmpDir)
 	addBin(t, binFolder, "go")
+	return tmpDir
+}
+
+func createJavaMvnEnv(t *testing.T, tempRoot string) string {
+	tmpDir, err := ioutil.TempDir(tempRoot, "javamvn-")
+	if err != nil {
+		t.Fatal("could not create temp dir")
+	}
+	addFile(t, tmpDir, "pom.xml", []byte("NOT IMPORTANT"), 0666)
+	binFolder := addBinFolder(t, tmpDir)
+	addBin(t, binFolder, "java")
+	addBin(t, binFolder, "javac")
+	addBin(t, binFolder, "mvn")
 	return tmpDir
 }
 
