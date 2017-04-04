@@ -59,7 +59,7 @@ func (d *daemon) Start() error {
 
 func (d *daemon) Stop() error {
 	if d.cmd == nil || d.ctx == nil || d.cancel == nil {
-		return fmt.Errorf("no command to stop")
+		return nil
 	}
 	d.cancel()
 	d.cmd, d.ctx, d.cancel = nil, nil, nil
