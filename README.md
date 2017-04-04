@@ -1,7 +1,7 @@
 Gotta Watch Your Code!
 ======================
 
-[![Build Status](https://travis-ci.org/makii42/gottaw.svg?branch=master)](https://travis-ci.org/makii42/gottaw) [![wercker status](https://app.wercker.com/status/b752a7e42c5eb6ec4003c421fa590189/s/master "wercker status")](https://app.wercker.com/project/byKey/b752a7e42c5eb6ec4003c421fa590189)
+[![Build Status](https://travis-ci.org/makii42/gottaw.svg?branch=master)](https://travis-ci.org/makii42/gottaw) [![wercker status](https://app.wercker.com/status/b752a7e42c5eb6ec4003c421fa590189/s/master "wercker status")](https://app.wercker.com/project/byKey/b752a7e42c5eb6ec4003c421fa590189) [![Coverage Status](https://coveralls.io/repos/github/makii42/gottaw/badge.svg?branch=master)](https://coveralls.io/github/makii42/gottaw?branch=master)
 
 GOTTA WATCH watches your code and builds it whenever you save a file. 
 

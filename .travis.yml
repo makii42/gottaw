@@ -1,4 +1,5 @@
 language: go
+sudo: false
 go:
   #- 1.5.x
   #- 1.6.x
@@ -8,3 +9,7 @@ go:
 os: 
   - linux
   - osx
+before_install:
+  - go get github.com/mattn/goveralls
+script:
+  - $HOME/gopath/bin/goveralls -service=travis-ci
