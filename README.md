@@ -123,7 +123,7 @@ Et voila:
 ![Growl Screenshot](growl.png)
 
 
-## Featurs
+## Features
 
 Some of the recent changes:
 
