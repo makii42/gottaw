@@ -5,8 +5,9 @@ excludes:
   - .vscode
   - .gitrecinfo
   - gottaw-go-tmp-umask
+  - .wercker
 pipeline: 
   - go get -v .
   - go build -v .
-  - go test -v ./... 
+  - go test -cover -v ./...
   - go install
