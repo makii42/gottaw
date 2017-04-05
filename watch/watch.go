@@ -126,19 +126,16 @@ func WatchIt(c *cli.Context) error {
 	return nil
 }
 
-func watchDirRecursive(dir string, tracker *Tracker, cfg *config.Config) error {
+func watchDirRecursive(dir string, t Tracker, cfg *config.Config) error {
 	var recorder filepath.WalkFunc = func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if info.IsDir() {
-			if ignored := isIgnored(path, cfg); err != nil {
-				return err
-			} else if !ignored {
-				tracker.Add(path)
-			} else {
+			if isIgnored(path, cfg) {
 				return filepath.SkipDir
 			}
+			t.Add(path)
 		}
 		return nil
 	}
@@ -190,13 +187,17 @@ func isIgnored(f string, cfg *config.Config) bool {
 		panic(err)
 	}
 	for _, exclude := range cfg.Excludes {
-		ude, err := filepath.Abs(exclude)
+		wd := "."
+		if cfg.WorkingDirectory != "" {
+			wd = cfg.WorkingDirectory
+		}
+		ude, err := filepath.Abs(filepath.Join(wd, exclude))
 		if err != nil {
-			log.Errorf("🚨  Please check your excludes in your config: '%s'", exclude)
+			log.Errorf("🚨  Please check your excludes in your config: '%s'", ude)
 			panic(err)
 		}
 		if ignore, err := filepath.Match(ude, f); err != nil {
-			log.Errorf("🚨  Please check your excludes in your config: '%s'", exclude)
+			log.Errorf("🚨  Please check your excludes in your config: '%s'", ude)
 			panic(err)
 		} else if ignore {
 			return true

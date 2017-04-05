@@ -33,7 +33,7 @@ func TestMain(m *testing.M) {
 	javaMaven = NewJavaMavenDefault(util)
 
 	// create and rollback test root directory
-	dir, err := ioutil.TempDir("", "gottaw-test")
+	dir, err := ioutil.TempDir("", "gottaw-defaults-test")
 	if err != nil {
 		panic(err)
 	}

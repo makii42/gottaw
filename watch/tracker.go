@@ -5,25 +5,35 @@ import (
 	c "github.com/makii42/gottaw/config"
 )
 
-type Tracker struct {
-	tracked map[string]bool
-	watcher *fsnotify.Watcher
-	cfg     *c.Config
+type Tracker interface {
+	Tracked() []string
+	Add(p string) error
+	IsTracked(p string) bool
+	Remove(path string)
+	Events() chan fsnotify.Event
+	Errors() chan error
+	Close() error
 }
 
-func NewTracker(cfg *c.Config) *Tracker {
+func NewTracker(cfg *c.Config) Tracker {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		panic(err)
 	}
-	return &Tracker{
+	return &FSNotifyTracker{
 		tracked: make(map[string]bool),
 		watcher: watcher,
 		cfg:     cfg,
 	}
 }
 
-func (t *Tracker) Tracked() []string {
+type FSNotifyTracker struct {
+	tracked map[string]bool
+	watcher *fsnotify.Watcher
+	cfg     *c.Config
+}
+
+func (t *FSNotifyTracker) Tracked() []string {
 	var keys []string
 	for k := range t.tracked {
 		keys = append(keys, k)
@@ -31,7 +41,7 @@ func (t *Tracker) Tracked() []string {
 	return keys
 }
 
-func (t *Tracker) Add(path string) error {
+func (t *FSNotifyTracker) Add(path string) error {
 	t.tracked[path] = true
 	if err := t.watcher.Add(path); err != nil {
 		return err
@@ -39,26 +49,26 @@ func (t *Tracker) Add(path string) error {
 	return nil
 }
 
-func (t *Tracker) IsTracked(path string) bool {
+func (t *FSNotifyTracker) IsTracked(path string) bool {
 	_, ok := t.tracked[path]
 	return ok
 }
 
-func (t *Tracker) Remove(path string) {
+func (t *FSNotifyTracker) Remove(path string) {
 	if _, ok := t.tracked[path]; ok {
 		t.watcher.Remove(path)
 		delete(t.tracked, path)
 	}
 }
 
-func (t *Tracker) Events() chan fsnotify.Event {
+func (t *FSNotifyTracker) Events() chan fsnotify.Event {
 	return t.watcher.Events
 }
 
-func (t *Tracker) Errors() chan error {
+func (t *FSNotifyTracker) Errors() chan error {
 	return t.watcher.Errors
 }
 
-func (t *Tracker) Close() error {
+func (t *FSNotifyTracker) Close() error {
 	return t.watcher.Close()
 }

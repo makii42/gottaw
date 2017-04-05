@@ -9,5 +9,5 @@ excludes:
 pipeline: 
   - go get -v .
   - go build -v .
-  - go test -cover -v ./...
+  - go test -cover ./...
   - go install
