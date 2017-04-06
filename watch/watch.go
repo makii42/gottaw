@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/makii42/gottaw/config"
 	"github.com/makii42/gottaw/daemon"
 	"github.com/makii42/gottaw/output"
-	"github.com/urfave/cli"
+	"gopkg.in/fsnotify.v1"
+	"gopkg.in/urfave/cli.v1"
 )
 
 var log *output.Logger

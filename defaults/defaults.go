@@ -12,7 +12,7 @@ import (
 
 	c "github.com/makii42/gottaw/config"
 	"github.com/makii42/gottaw/output"
-	"github.com/urfave/cli"
+	"gopkg.in/urfave/cli.v1"
 )
 
 var DefaultsCmd = cli.Command{

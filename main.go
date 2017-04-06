@@ -5,13 +5,14 @@ import (
 
 	"github.com/makii42/gottaw/defaults"
 	"github.com/makii42/gottaw/watch"
-	"github.com/urfave/cli"
+	"gopkg.in/urfave/cli.v1"
 )
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "gotta watch"
 	app.Usage = "Run command(s) when files in the folder change."
+	app.EnableBashCompletion = true
 	app.Action = watch.WatchIt
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
