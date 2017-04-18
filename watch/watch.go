@@ -27,8 +27,12 @@ var WatchCmd = cli.Command{
 // WatchIt does the work
 func WatchIt(c *cli.Context) error {
 
-	var delay time.Duration
-	watchCfg, delay = config.Setup(c)
+	delay, err := time.ParseDuration(c.GlobalString("delay"))
+	if err != nil {
+		panic(err)
+	}
+
+	watchCfg = config.Setup(c.GlobalString("config"))
 	tracker := NewTracker(watchCfg)
 	log = output.NewLogger(output.TRACE, watchCfg)
 	defer tracker.Close()

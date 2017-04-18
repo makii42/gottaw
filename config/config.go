@@ -3,9 +3,7 @@ package config
 import (
 	"io/ioutil"
 	"path/filepath"
-	"time"
 
-	"gopkg.in/urfave/cli.v1"
 	"gopkg.in/yaml.v2"
 )
 
@@ -19,8 +17,8 @@ type Config struct {
 	Server           string   `yaml:"server,omitempty"`
 }
 
-func Setup(c *cli.Context) (*Config, time.Duration) {
-	configFile, err := filepath.Abs(c.GlobalString("config"))
+func Setup(cfgFileRel string) *Config {
+	configFile, err := filepath.Abs(cfgFileRel)
 	if err != nil {
 		panic(err)
 	}
@@ -28,11 +26,7 @@ func Setup(c *cli.Context) (*Config, time.Duration) {
 	if err != nil {
 		panic(err)
 	}
-	delay, err := time.ParseDuration(c.GlobalString("delay"))
-	if err != nil {
-		panic(err)
-	}
-	return cfg, delay
+	return cfg
 }
 
 func ParseConfig(cfgFile string) (*Config, error) {
