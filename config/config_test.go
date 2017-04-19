@@ -57,6 +57,23 @@ func TestSetupPanicsWhenBrokenFile(t *tt.T) {
 	log.Printf("All is well!")
 }
 
+func TestSerializeConfigDoesTheJob(t *tt.T) {
+	cfg := &Config{
+		Growl:    true,
+		Pipeline: []string{"echo \"Hello, World\""},
+		Excludes: []string{".git", ".hg"},
+	}
+	data, err := SerializeConfig(cfg)
+	assert.Nil(t, err)
+	assert.Equal(t, `excludes:
+- .git
+- .hg
+pipeline:
+- echo "Hello, World"
+growl: true
+`, string(data))
+}
+
 func assertPanic(t *tt.T, what string) {
 	if r := recover(); r == nil {
 		t.Errorf(fmt.Sprintf("%s did not panic as expected", what))
