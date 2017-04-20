@@ -22,7 +22,7 @@ func (g GolangDefault) Test(dir string) bool {
 	return g.util.filesMatch(dir, "*.go") && g.util.isExecutable("go")
 
 }
-func (g GolangDefault) Config() *c.Config {
+func (g GolangDefault) Config(dir string) *c.Config {
 	return &c.Config{
 		Excludes: append(
 			defaultExcludes,

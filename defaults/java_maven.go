@@ -23,7 +23,7 @@ func (j JavaMavenDefault) Test(dir string) bool {
 		j.util.isExecutable("java") && j.util.isExecutable("javac") &&
 		(j.util.isExecutable("mvn") || j.util.isExecutable("mvn.bat"))
 }
-func (j JavaMavenDefault) Config() *c.Config {
+func (j JavaMavenDefault) Config(dir string) *c.Config {
 	return &c.Config{
 		Excludes: append(defaultExcludes, "target", "*/target", "*iml"),
 		Pipeline: []string{

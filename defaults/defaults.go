@@ -15,6 +15,8 @@ import (
 	"gopkg.in/urfave/cli.v1"
 )
 
+// DefaultsCmd is the command that detects the type of environment
+// we are dealing with. It optionally writes the default config file.
 var DefaultsCmd = cli.Command{
 	Name:   "defaults",
 	Usage:  "Prints and optionally writes the defaults for a folder",
@@ -36,13 +38,9 @@ func defaults(cli *cli.Context) {
 	} else {
 		l = output.NewLogger(output.NOTICE, conf)
 	}
-	configFile, err := filepath.Abs(cli.GlobalString("config"))
-	if err != nil {
-		panic(err)
-	}
+	configFile, _ := filepath.Abs(cli.GlobalString("config"))
 	file, err := os.Stat(configFile)
 	if err == nil && file.Mode().IsRegular() {
-		// file exists
 		fmt.Printf("Config file exists: %s\n", configFile)
 	}
 	// err != nil assumes file does not exist.
@@ -58,7 +56,7 @@ func defaults(cli *cli.Context) {
 		if def != nil {
 			l.Successf("🎯  Identified default %s\n", def.Name())
 			if cli.Bool("write") {
-				data, err := c.SerializeConfig(def.Config())
+				data, err := c.SerializeConfig(def.Config(rootDir))
 				if err != nil {
 					log.Fatalf("error serializing default: %s", err)
 				}
@@ -88,6 +86,7 @@ func defaults(cli *cli.Context) {
 	}
 }
 
+// GuessDefault does the acutal testing
 func GuessDefault(path string, l *output.Logger) Default {
 	util := newDefaultsUtil(l)
 
@@ -120,5 +119,5 @@ func (d DefaultGuesser) Find(dir string) Default {
 type Default interface {
 	Name() string
 	Test(dir string) bool
-	Config() *c.Config
+	Config(dir string) *c.Config
 }

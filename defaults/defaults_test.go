@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+	tt "testing"
 
 	"io/ioutil"
 	"os"
@@ -22,7 +23,7 @@ var logger *output.Logger
 
 var golang, nodeNpm, nodeYarn, javaMaven Default
 
-func TestMain(m *testing.M) {
+func TestMain(m *tt.M) {
 	// deps in trace - YES thats not quiet by default
 	logger = output.NewLogger(output.TRACE, &config.Config{})
 	util = newDefaultsUtil(logger)
@@ -51,15 +52,20 @@ func TestMain(m *testing.M) {
 	os.Exit(result)
 }
 
+func TestDefaultsPanicsWhenRootDirDoesNotExist(t *tt.T) {
+	//cli := &cli.Context{}
+	// TODO this one breaks as we need to construct
+	// cli.GlobalSet("config", "/foo/bar/snae.yml")
+}
+
 // These tests do ensure the defaults are recognized properly.
 // TODO: Take windows into the fold by providing "exe"/"bat" suffixes
-// for tests on windows.
-
-func TestGolangDefault(t *testing.T) {
+// for tests on windows. This is currently BROKEN!
+func TestGolangDefault(t *tt.T) {
 	tmpDir := createGolangEnv(t, tempRoot)
 	// positive
 	assert.True(t, golang.Test(tmpDir))
-	assert.NotNil(t, golang.Config())
+	assert.NotNil(t, golang.Config(tmpDir))
 
 	// negative tests
 	assert.False(t, nodeYarn.Test(tmpDir))
@@ -67,11 +73,11 @@ func TestGolangDefault(t *testing.T) {
 	assert.False(t, javaMaven.Test(tmpDir))
 }
 
-func TestNodeYarnDefault(t *testing.T) {
+func TestNodeYarnDefault(t *tt.T) {
 	tmpDir := createNodeYarnEnv(t, tempRoot)
 	// positive
 	assert.True(t, nodeYarn.Test(tmpDir))
-	assert.NotNil(t, nodeYarn.Config())
+	assert.NotNil(t, nodeYarn.Config(tmpDir))
 
 	// negative tests
 	assert.False(t, golang.Test(tmpDir))
@@ -79,11 +85,11 @@ func TestNodeYarnDefault(t *testing.T) {
 	assert.False(t, javaMaven.Test(tmpDir))
 }
 
-func TestNodeNpmDefault(t *testing.T) {
+func TestNodeNpmDefault(t *tt.T) {
 	tmpDir := createNodeNpmEnv(t, tempRoot)
 	// positive
 	assert.True(t, nodeNpm.Test(tmpDir))
-	assert.NotNil(t, nodeNpm.Config())
+	assert.NotNil(t, nodeNpm.Config(tmpDir))
 
 	// negative tests
 	assert.False(t, golang.Test(tmpDir))
@@ -91,11 +97,11 @@ func TestNodeNpmDefault(t *testing.T) {
 	assert.False(t, javaMaven.Test(tmpDir))
 }
 
-func TestJavaMavenDefault(t *testing.T) {
+func TestJavaMavenDefault(t *tt.T) {
 	tmpDir := createJavaMvnEnv(t, tempRoot)
 	// positive
 	assert.True(t, javaMaven.Test(tmpDir))
-	assert.NotNil(t, javaMaven.Config())
+	assert.NotNil(t, javaMaven.Config(tmpDir))
 
 	// negative
 	assert.False(t, golang.Test(tmpDir))
@@ -103,7 +109,7 @@ func TestJavaMavenDefault(t *testing.T) {
 	assert.False(t, nodeNpm.Test(tmpDir))
 }
 
-func createNodeYarnEnv(t *testing.T, tempRoot string) string {
+func createNodeYarnEnv(t *tt.T, tempRoot string) string {
 	tmpDir, err := ioutil.TempDir(tempRoot, "nodeyarn-")
 	if err != nil {
 		t.Fatal("could not create tempdir")
@@ -115,7 +121,7 @@ func createNodeYarnEnv(t *testing.T, tempRoot string) string {
 	return tmpDir
 }
 
-func createNodeNpmEnv(t *testing.T, tempRoot string) string {
+func createNodeNpmEnv(t *tt.T, tempRoot string) string {
 	tmpDir, err := ioutil.TempDir(tempRoot, "nodenpm-")
 	if err != nil {
 		t.Fatal("could not create temp dir")
@@ -127,7 +133,7 @@ func createNodeNpmEnv(t *testing.T, tempRoot string) string {
 	return tmpDir
 }
 
-func createGolangEnv(t *testing.T, tempRoot string) string {
+func createGolangEnv(t *tt.T, tempRoot string) string {
 	tmpDir, err := ioutil.TempDir(tempRoot, "golang-")
 	if err != nil {
 		t.Fatal("could not create temp dir")
@@ -139,7 +145,7 @@ func createGolangEnv(t *testing.T, tempRoot string) string {
 	return tmpDir
 }
 
-func createJavaMvnEnv(t *testing.T, tempRoot string) string {
+func createJavaMvnEnv(t *tt.T, tempRoot string) string {
 	tmpDir, err := ioutil.TempDir(tempRoot, "javamvn-")
 	if err != nil {
 		t.Fatal("could not create temp dir")
@@ -152,7 +158,7 @@ func createJavaMvnEnv(t *testing.T, tempRoot string) string {
 	return tmpDir
 }
 
-func addFile(t *testing.T, dir string, filename string, contents []byte, perm os.FileMode) {
+func addFile(t *tt.T, dir string, filename string, contents []byte, perm os.FileMode) {
 	filepath := filepath.Join(dir, filename)
 	if err := ioutil.WriteFile(filepath, contents, perm); err != nil {
 		t.Fatalf("could not write temp %s\n", filename)
@@ -172,7 +178,7 @@ func addBin(t *testing.T, binFolder string, binName string) {
 	)
 }
 
-func addBinFolder(t *testing.T, dir string) string {
+func addBinFolder(t *tt.T, dir string) string {
 	binDir := filepath.Join(dir, "bin")
 	err := os.Mkdir(binDir, 0777)
 	if err != nil {

@@ -23,7 +23,7 @@ func (ny NodeYarnDefault) Test(dir string) bool {
 		ny.util.isExecutable("node") &&
 		ny.util.isExecutable("yarn")
 }
-func (g NodeYarnDefault) Config() *c.Config {
+func (g NodeYarnDefault) Config(dir string) *c.Config {
 	return &c.Config{
 		Excludes: append(
 			defaultExcludes,

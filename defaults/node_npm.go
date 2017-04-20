@@ -21,7 +21,7 @@ func (nn NodeNpmDefault) Test(dir string) bool {
 		nn.util.isExecutable("node") &&
 		nn.util.isExecutable("npm")
 }
-func (nn NodeNpmDefault) Config() *c.Config {
+func (nn NodeNpmDefault) Config(dir string) *c.Config {
 	return &c.Config{
 		Excludes: append(
 			defaultExcludes,
