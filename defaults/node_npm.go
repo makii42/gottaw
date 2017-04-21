@@ -1,6 +1,8 @@
 package defaults
 
 import (
+	"path/filepath"
+
 	c "github.com/makii42/gottaw/config"
 )
 
@@ -15,14 +17,16 @@ type NodeNpmDefault struct {
 func (nn NodeNpmDefault) Name() string {
 	return "NodeJS/npm"
 }
+
 func (nn NodeNpmDefault) Test(dir string) bool {
 	nn.util.l.Tracef("testing for %s...\n", nn.Name())
 	return nn.util.fileExists(dir, "package.json") &&
 		nn.util.isExecutable("node") &&
 		nn.util.isExecutable("npm")
 }
+
 func (nn NodeNpmDefault) Config(dir string) *c.Config {
-	return &c.Config{
+	config := c.Config{
 		Excludes: append(
 			defaultExcludes,
 			"node_modules",
@@ -33,4 +37,8 @@ func (nn NodeNpmDefault) Config(dir string) *c.Config {
 			"npm test",
 		},
 	}
+	if nodePkg, err := LoadNodePackage(filepath.Join(dir, "package.json")); err == nil {
+		nodePkg.FillPipeline(&config, "npm")
+	}
+	return &config
 }

@@ -1,6 +1,8 @@
 package defaults
 
 import (
+	"path/filepath"
+
 	c "github.com/makii42/gottaw/config"
 )
 
@@ -17,14 +19,16 @@ type NodeYarnDefault struct {
 func (ny NodeYarnDefault) Name() string {
 	return "NodeJS/yarn"
 }
+
 func (ny NodeYarnDefault) Test(dir string) bool {
 	ny.util.l.Tracef("testing for %s...\n", ny.Name())
 	return ny.util.fileExists(dir, "package.json") &&
 		ny.util.isExecutable("node") &&
 		ny.util.isExecutable("yarn")
 }
+
 func (g NodeYarnDefault) Config(dir string) *c.Config {
-	return &c.Config{
+	config := c.Config{
 		Excludes: append(
 			defaultExcludes,
 			"node_modules",
@@ -36,4 +40,8 @@ func (g NodeYarnDefault) Config(dir string) *c.Config {
 			"yarn test",
 		},
 	}
+	if nodePkg, err := LoadNodePackage(filepath.Join(dir, "package.json")); err == nil {
+		nodePkg.FillPipeline(&config, "yarn")
+	}
+	return &config
 }
