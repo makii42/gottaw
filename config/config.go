@@ -9,12 +9,20 @@ import (
 
 // Config is the root cfg object
 type Config struct {
-	file             string
-	WorkingDirectory string   `yaml:"workdir,omitempty"`
-	Excludes         []string `yaml:"excludes"`
-	Pipeline         []string `yaml:"pipeline"`
-	Growl            bool     `yaml:"growl,omitempty"`
-	Server           string   `yaml:"server,omitempty"`
+	File             string             `yaml:",omitempty"`
+	WorkingDirectory string             `yaml:"workdir,omitempty"`
+	Excludes         []string           `yaml:"excludes"`
+	Pipeline         []string           `yaml:"pipeline"`
+	Growl            bool               `yaml:"growl,omitempty"`
+	Server           string             `yaml:"server,omitempty"`
+	Sidecars         map[string]Sidecar `yaml:"sidecars,omitempty"`
+}
+
+// Sidecar defines a background ("sidecar") service that is kept running
+type Sidecar struct {
+	Image       string            `yaml:"image"`
+	Environment map[string]string `yaml:"env,omitempty"`
+	Script      string            `yaml:"script,omitempt"`
 }
 
 var (
