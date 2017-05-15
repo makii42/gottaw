@@ -60,17 +60,18 @@ func defaults(cli *cli.Context) {
 				if err != nil {
 					log.Fatalf("error serializing default: %s", err)
 				}
+				newCfgString := fmt.Sprintf("# What is this file? Check it out at https://github.com/makii42/gottaw !\n%s", data)
 				fmt.Printf(
 					"Default config for %s:\n===\n%s===\nWrite to '%s'? [y/N] ",
 					def.Name(),
-					string(data),
+					newCfgString,
 					cli.GlobalString("config"),
 				)
 				reader := bufio.NewReader(os.Stdin)
 				input, _ := reader.ReadString('\n')
 				input = strings.Trim(input, " \n")
 				if strings.ToLower(input) == "y" {
-					err := ioutil.WriteFile(cli.GlobalString("config"), data, 0660)
+					err := ioutil.WriteFile(cli.GlobalString("config"), []byte(newCfgString), 0660)
 					if err != nil {
 						log.Fatalf("error writing '%s': %s", cli.GlobalString("config"), err)
 					}

@@ -27,7 +27,7 @@ You can generate a default config file by passing an additional `--write` flag:
     🎯  Identified default Golang
     Default config for Golang:
     ===
-    workdir: ""
+    # What is this file? Check it out at https://github.com/makii42/gottaw !
     excludes:
     - .git
     - .hg
@@ -39,8 +39,6 @@ You can generate a default config file by passing an additional `--write` flag:
     - go get -v .
     - go build -v .
     - go test -v ./...
-    growl: false
-    server: ""
     ===
     Write to './.gottaw.yml'? [y/N] y
     ✅  Okay!

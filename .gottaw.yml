@@ -1,3 +1,4 @@
+# What is this file? Check it out at https://github.com/makii42/gottaw !
 growl: true
 excludes:
   - gottaw*
