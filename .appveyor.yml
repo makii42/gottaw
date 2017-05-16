@@ -1,0 +1,21 @@
+version: build-{build}.{branch}
+
+clone_folder: C:\gopath\src\github.com\makii42\gottaw
+shallow_clone: true
+
+environment:
+  GOPATH: C:\gopath
+
+platform:
+  - x64
+
+build: off
+
+install: 
+  - go version
+  - go env
+
+test_script: 
+  - go get -v .
+  - go build -v .
+  - go test -v -cover ./...
