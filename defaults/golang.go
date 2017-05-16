@@ -17,11 +17,12 @@ type GolangDefault struct {
 func (g GolangDefault) Name() string {
 	return "Golang"
 }
+
 func (g GolangDefault) Test(dir string) bool {
 	g.util.l.Tracef("testing for %s...\n", g.Name())
 	return g.util.filesMatch(dir, "*.go") && g.util.isExecutable("go")
-
 }
+
 func (g GolangDefault) Config(dir string) *c.Config {
 	return &c.Config{
 		Excludes: append(

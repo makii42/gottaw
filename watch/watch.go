@@ -163,11 +163,11 @@ func executePipeline(preProcess func(), pipeline []string, postProcess func()) f
 				cmd.Dir = watchCfg.WorkingDirectory
 			}
 			err := cmd.Start()
-			pid := cmd.Process.Pid
 			if err != nil {
-				log.Errorf("🚨  (%d@%d) ERROR starting '%s': %v", i, pid, commandStr, err)
+				log.Errorf("🚨  (%d@?) ERROR starting '%s': %v", i, commandStr, err)
 				return
 			}
+			pid := cmd.Process.Pid
 			log.Noticef("♻️  (%d@%d) started '%s'\n", i, pid, commandStr)
 			if err := cmd.Wait(); err != nil {
 				log.Errorf("🚨  (%d@%d) ERROR: %s \n", i, pid, err)
