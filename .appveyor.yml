@@ -16,6 +16,6 @@ install:
   - go env
 
 test_script: 
-  - go get -v .
+  - go get -t -v .
   - go build -v .
   - go test -v -cover ./...
