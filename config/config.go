@@ -17,6 +17,7 @@ type Config struct {
 	Server           string   `yaml:"server,omitempty"`
 }
 
+// Setup bootstraps the config object with the config file.
 func Setup(cfgFileRel string) *Config {
 	configFile, err := filepath.Abs(cfgFileRel)
 	if err != nil {
@@ -29,6 +30,7 @@ func Setup(cfgFileRel string) *Config {
 	return cfg
 }
 
+// ParseConfig reads and parses a config file.
 func ParseConfig(cfgFile string) (*Config, error) {
 	source, err := ioutil.ReadFile(cfgFile)
 	if err != nil {
