@@ -1,12 +1,34 @@
-package watch
+package daemon
 
 import (
+	"fmt"
+
+	d "github.com/docker/docker/client"
+
 	c "github.com/makii42/gottaw/config"
 	o "github.com/makii42/gottaw/output"
 )
 
+var client *d.Client
+
+func init() {
+	c, err := d.NewEnvClient()
+	if err != nil {
+		panic(fmt.Errorf("cannot create docker client - please install docker before using sidecars"))
+	}
+	client = c
+}
+
+// Sidecar describes a backend service for a build pipeline or server
+type Sidecar interface {
+	Start() error
+	Stop() error
+}
+
 type SidecarRunner struct {
-	log o.Logger
+	dockerClient d.Client
+	log          o.Logger
+	config       c.Sidecar
 }
 
 type sidecar struct {

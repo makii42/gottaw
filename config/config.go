@@ -22,7 +22,8 @@ type Config struct {
 type Sidecar struct {
 	Image       string            `yaml:"image"`
 	Environment map[string]string `yaml:"env,omitempty"`
-	Script      string            `yaml:"script,omitempt"`
+	Script      string            `yaml:"script,omitempty"`
+	Volumes     map[string]string `yaml:"volumes,omitempty"`
 }
 
 var (
