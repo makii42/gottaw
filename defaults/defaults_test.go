@@ -3,7 +3,6 @@ package defaults
 import (
 	"path/filepath"
 	"runtime"
-	"testing"
 	tt "testing"
 
 	"io/ioutil"
@@ -50,12 +49,6 @@ func TestMain(m *tt.M) {
 
 	result := m.Run()
 	os.Exit(result)
-}
-
-func TestDefaultsPanicsWhenRootDirDoesNotExist(t *tt.T) {
-	//cli := &cli.Context{}
-	// TODO this one breaks as we need to construct
-	// cli.GlobalSet("config", "/foo/bar/snae.yml")
 }
 
 // These tests do ensure the defaults are recognized properly.
@@ -165,7 +158,7 @@ func addFile(t *tt.T, dir string, filename string, contents []byte, perm os.File
 	}
 }
 
-func addBin(t *testing.T, binFolder string, binName string) {
+func addBin(t *tt.T, binFolder string, binName string) {
 	if runtime.GOOS == "windows" {
 		binName = binName + ".exe"
 	}
