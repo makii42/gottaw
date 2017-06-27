@@ -54,10 +54,7 @@ func WatchIt(c *cli.Context) error {
 		for {
 			select {
 			case ev := <-tracker.Events():
-				if ev.Op&fsnotify.Chmod == fsnotify.Chmod { // couldn't care less
-					continue
-				}
-				if isIgnored(ev.Name, watchCfg) {
+				if ev.Op&fsnotify.Chmod == fsnotify.Chmod || isIgnored(ev.Name, watchCfg) { // couldn't care less
 					continue
 				}
 				if ev.Op&fsnotify.Create == fsnotify.Create {
