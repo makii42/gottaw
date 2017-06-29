@@ -8,6 +8,10 @@ import (
 	"gopkg.in/urfave/cli.v1"
 )
 
+var (
+	Trace bool
+)
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "gotta watch"
@@ -32,8 +36,9 @@ func main() {
 			Usage: "Delay of the pipeline action after event",
 		},
 		cli.BoolFlag{
-			Name:  "t, trace",
-			Usage: "Log more details",
+			Name:        "t, trace",
+			Usage:       "Log more details",
+			Destination: &Trace,
 		},
 		cli.BoolFlag{
 			Name:  "q, quiet",
@@ -46,6 +51,7 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		watch.WatchCmd,
+		watch.OneRunCmd,
 		defaults.DefaultsCmd,
 	}
 	app.Run(os.Args)

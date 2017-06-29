@@ -2,14 +2,13 @@ package watch
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/makii42/gottaw/config"
 	"github.com/makii42/gottaw/daemon"
 	"github.com/makii42/gottaw/output"
+	"github.com/makii42/gottaw/pipeline"
 	"gopkg.in/fsnotify.v1"
 	"gopkg.in/urfave/cli.v1"
 )
@@ -88,7 +87,7 @@ func WatchIt(c *cli.Context) error {
 					log.Triggerf("🔎  even more changes detected: %s\n", ev.Name)
 					timer.Reset(delay)
 				} else {
-					pipelineFunc := executePipeline(func() {
+					pipeline := pipeline.NewPipeline(func() {
 						if serverd != nil {
 							if err := serverd.Stop(); err != nil {
 								panic(err)
@@ -100,7 +99,7 @@ func WatchIt(c *cli.Context) error {
 							serverd.Start()
 						}
 					})
-					timer = time.AfterFunc(delay, pipelineFunc)
+					timer = time.AfterFunc(delay, func() { pipeline.exec() })
 				}
 
 			case err := <-tracker.Errors():
@@ -142,43 +141,6 @@ func watchDirRecursive(dir string, t Tracker, cfg *config.Config) error {
 	}
 	err := filepath.Walk(dir, recorder)
 	return err
-}
-
-func executePipeline(preProcess func(), pipeline []string, postProcess func()) func() {
-	return func() {
-		start := time.Now()
-		if preProcess != nil {
-			preProcess()
-		}
-		for i, commandStr := range pipeline {
-			elements := strings.Split(commandStr, " ")
-			command, elements := elements[0], elements[1:]
-			cmd := exec.Command(command, elements...)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			if watchCfg.WorkingDirectory != "" {
-				cmd.Dir = watchCfg.WorkingDirectory
-			}
-			err := cmd.Start()
-			if err != nil {
-				log.Errorf("🚨  (%d@?) ERROR starting '%s': %v", i, commandStr, err)
-				return
-			}
-			pid := cmd.Process.Pid
-			log.Noticef("♻️  (%d@%d) started '%s'\n", i, pid, commandStr)
-			if err := cmd.Wait(); err != nil {
-				log.Errorf("🚨  (%d@%d) ERROR: %s \n", i, pid, err)
-				return
-			}
-
-			log.Noticef("♻️  (%d@%d) done\n", i, pid)
-		}
-		dur := time.Since(start)
-		log.Successf("✅  Pipeline done after %s\n", dur.String())
-		if postProcess != nil {
-			postProcess()
-		}
-	}
 }
 
 func isIgnored(f string, cfg *config.Config) bool {
