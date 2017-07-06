@@ -11,21 +11,21 @@ import (
 
 	"fmt"
 
-	"github.com/makii42/gottaw/config"
 	"github.com/makii42/gottaw/output"
 	"github.com/stretchr/testify/assert"
+	"log"
 )
 
 var packageJsonContents = []byte("{name: \"nodepkg\"}")
 var tempRoot string
 var util *defaultsUtil
-var logger *output.Logger
+var logger output.Logger
 
 var golang, nodeNpm, nodeYarn, javaMaven Default
 
 func TestMain(m *tt.M) {
 	// deps in trace - YES thats not quiet by default
-	logger = output.NewLogger(output.TRACE, &config.Config{})
+	logger = output.NewLogger()
 	util = newDefaultsUtil(logger)
 
 	// test default objects
@@ -45,9 +45,9 @@ func TestMain(m *tt.M) {
 	// create and rollback path
 	originalPath := os.Getenv("PATH")
 	os.Setenv("PATH", "")
-	fmt.Printf("FIXED PATH '%s'", os.Getenv("PATH"))
+	log.Printf("FIXED PATH '%s'", os.Getenv("PATH"))
 	defer os.Setenv("PATH", originalPath)
-
+	log.Printf("setup done, starting run")
 	result := m.Run()
 	os.Exit(result)
 }

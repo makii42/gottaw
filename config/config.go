@@ -9,13 +9,15 @@ import (
 
 // Config is the root config object
 type Config struct {
-	File             string   `yaml:",omitempty"`
+	file             string   
 	WorkingDirectory string   `yaml:"workdir,omitempty"`
 	Excludes         []string `yaml:"excludes"`
 	Pipeline         []string `yaml:"pipeline"`
 	Growl            bool     `yaml:"growl,omitempty"`
 	Server           string   `yaml:"server,omitempty"`
 }
+
+var config Config
 
 // Setup bootstraps the config object with the config file.
 func Setup(cfgFileRel string) *Config {
@@ -30,18 +32,31 @@ func Setup(cfgFileRel string) *Config {
 	return cfg
 }
 
+// Returns the loaded config file name.
+func (c *Config) GetConfigFile() string {
+	return c.file
+}
+
+// Reloads this configuration. It will panic if an error occurs.
+func (c *Config) Reload() {
+	var err error
+	_, err = ParseConfig(c.file)
+	if err != nil {
+		panic(err)
+	}
+}
+
 // ParseConfig reads and parses a config file.
 func ParseConfig(cfgFile string) (*Config, error) {
 	source, err := ioutil.ReadFile(cfgFile)
 	if err != nil {
 		return nil, err
 	}
-	var cfg Config
-	if err := yaml.Unmarshal(source, &cfg); err != nil {
+	if err := yaml.Unmarshal(source, &config); err != nil {
 		return nil, err
 	}
-	cfg.File = cfgFile
-	return &cfg, nil
+	config.file = cfgFile
+	return &config, nil
 }
 
 func SerializeConfig(cfg *Config) ([]byte, error) {

@@ -3,10 +3,13 @@ growl: true
 excludes:
   - gottaw*
   - .git
+  - .idea
   - .vscode
   - .gitrecinfo
   - .wercker
-pipeline: 
+  - "*___jb_tmp___"
+  - "*___jb_old___"
+pipeline:
   - go get -v .
   - go build -v .
   - go test -cover ./...

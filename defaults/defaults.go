@@ -1,18 +1,16 @@
 package defaults
 
 import (
-	"bufio"
-	"fmt"
 	"log"
-	"os"
 	"path/filepath"
-	"strings"
-
-	"io/ioutil"
-
 	c "github.com/makii42/gottaw/config"
 	"github.com/makii42/gottaw/output"
 	"gopkg.in/urfave/cli.v1"
+	"os"
+	"fmt"
+	"bufio"
+	"strings"
+	"io/ioutil"
 )
 
 // DefaultsCmd is the command that detects the type of environment
@@ -29,15 +27,8 @@ var DefaultsCmd = cli.Command{
 	},
 }
 
-func defaults(cli *cli.Context) {
-	conf := &c.Config{}
-	trace := cli.GlobalBool("trace")
-	var l *output.Logger
-	if trace {
-		l = output.NewLogger(output.TRACE, conf)
-	} else {
-		l = output.NewLogger(output.NOTICE, conf)
-	}
+func defaults(cli *cli.Context) error {
+	l := output.NewLog()
 	configFile, _ := filepath.Abs(cli.GlobalString("config"))
 	file, err := os.Stat(configFile)
 	if err == nil && file.Mode().IsRegular() {
@@ -60,7 +51,8 @@ func defaults(cli *cli.Context) {
 				if err != nil {
 					log.Fatalf("error serializing default: %s", err)
 				}
-				newCfgString := fmt.Sprintf("# What is this file? Check it out at https://github.com/makii42/gottaw !\n%s", data)
+				newCfgString := fmt.Sprintf("# What is this file? Check it out at "+
+					"https://github.com/makii42/gottaw !\n%s", data)
 				fmt.Printf(
 					"Default config for %s:\n===\n%s===\nWrite to '%s'? [y/N] ",
 					def.Name(),
@@ -85,10 +77,11 @@ func defaults(cli *cli.Context) {
 			fmt.Println("\nFeel free to contribute your default at https://github.com/makii42/gottaw")
 		}
 	}
+	return nil
 }
 
 // GuessDefault does the acutal testing
-func GuessDefault(path string, l *output.Logger) Default {
+func GuessDefault(path string, l output.Logger) Default {
 	util := newDefaultsUtil(l)
 
 	guesser := DefaultGuesser{

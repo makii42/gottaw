@@ -5,6 +5,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/makii42/gottaw/output"
 )
 
 type Executor func()
@@ -14,12 +16,15 @@ type Pipeline struct {
 	post     Executor
 	commands []string
 	wd       string
+	log      output.Logger
 }
 
-func NewPipeline(preProcess func(), wd string, pipeline []string, postProcess func()) *Pipeline {
-
+func NewPipeline(preProcess func(), pipeline []string, postProcess func()) *Pipeline {
 	return &Pipeline{
 		commands: pipeline,
+		pre:      preProcess,
+		post:     postProcess,
+		log:      output.NewLogger(),
 	}
 }
 
@@ -40,19 +45,19 @@ func (p Pipeline) Executor() Executor {
 			}
 			err := cmd.Start()
 			if err != nil {
-				log.Errorf("🚨  (%d@?) ERROR starting '%s': %v", i, commandStr, err)
+				p.log.Errorf("🚨  (%d@?) ERROR starting '%s': %v", i, commandStr, err)
 				return
 			}
 			pid := cmd.Process.Pid
-			log.Noticef("♻️  (%d@%d) started '%s'\n", i, pid, commandStr)
+			p.log.Noticef("♻️  (%d@%d) started '%s'\n", i, pid, commandStr)
 			if err := cmd.Wait(); err != nil {
-				log.Errorf("🚨  (%d@%d) ERROR: %s \n", i, pid, err)
+				p.log.Errorf("🚨  (%d@%d) ERROR: %s \n", i, pid, err)
 				return
 			}
-			log.Noticef("♻️  (%d@%d) done\n", i, pid)
+			p.log.Noticef("♻️  (%d@%d) done\n", i, pid)
 		}
 		dur := time.Since(start)
-		log.Successf("✅  Pipeline done after %s\n", dur.String())
+		p.log.Successf("✅  Pipeline done after %s\n", dur.String())
 		if p.post != nil {
 			p.post()
 		}
