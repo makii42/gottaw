@@ -28,9 +28,15 @@ var DefaultsCmd = cli.Command{
 }
 
 func defaults(cli *cli.Context) error {
-	l := output.NewLog()
+	l, err := output.NewLog(&c.Config{})
+	if err != nil {
+		return err
+	}
 	configFile, _ := filepath.Abs(cli.GlobalString("config"))
 	file, err := os.Stat(configFile)
+	if err != nil {
+		return err
+	}
 	if err == nil && file.Mode().IsRegular() {
 		fmt.Printf("Config file exists: %s\n", configFile)
 	}

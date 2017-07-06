@@ -19,12 +19,12 @@ type Pipeline struct {
 	log      output.Logger
 }
 
-func NewPipeline(preProcess func(), pipeline []string, postProcess func()) *Pipeline {
+func NewPipeline(preProcess func(), l output.Logger, pipeline []string, postProcess func()) *Pipeline {
 	return &Pipeline{
 		commands: pipeline,
 		pre:      preProcess,
 		post:     postProcess,
-		log:      output.NewLogger(),
+		log:      l,
 	}
 }
 
@@ -49,12 +49,12 @@ func (p Pipeline) Executor() Executor {
 				return
 			}
 			pid := cmd.Process.Pid
-			p.log.Noticef("♻️  (%d@%d) started '%s'\n", i, pid, commandStr)
+			p.log.Noticef("♻  (%d@%d) started '%s'\n", i, pid, commandStr)
 			if err := cmd.Wait(); err != nil {
 				p.log.Errorf("🚨  (%d@%d) ERROR: %s \n", i, pid, err)
 				return
 			}
-			p.log.Noticef("♻️  (%d@%d) done\n", i, pid)
+			p.log.Noticef("♻  (%d@%d) done\n", i, pid)
 		}
 		dur := time.Since(start)
 		p.log.Successf("✅  Pipeline done after %s\n", dur.String())

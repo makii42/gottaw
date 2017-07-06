@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -24,7 +23,8 @@ excludes: this as well
 func TestSetupWorks(t *tt.T) {
 	// we presume a certain state in this file,
 	// so changes might cause test failures
-	cfg := Setup("../.gottaw.yml")
+	File = "../.gottaw.yml"
+	cfg := Load()
 	assert.NotNil(t, cfg)
 	assert.True(t, len(cfg.Excludes) > 1)
 	assert.True(t, len(cfg.Pipeline) > 1)
@@ -32,28 +32,27 @@ func TestSetupWorks(t *tt.T) {
 }
 
 func TestSetupPanicsWhenFileNotPresent(t *tt.T) {
-	defer assertPanic(t, "setup with non-existent file")
-	Setup("./does-not-exist-should-panic.yml")
+	File = "./does-not-exist-should-panic.yml"
+	Load()
 }
 
 func TestSetupPanicsWhenEmptyStringIsPassed(t *tt.T) {
-	defer assertPanic(t, "setup with crap passed")
-	Setup("")
+	File = ""
+	Load()
 }
 func TestSetupPanicsWhenCrapIsPassed(t *tt.T) {
-	defer assertPanic(t, "setup with crap passed")
-	Setup("###")
+	File = "###"
+	Load()
 }
 
 func TestSetupPanicsWhenBrokenFile(t *tt.T) {
 	dir, _ := ioutil.TempDir("", "gottaw-config-test")
-	filepath := filepath.Join(dir, "testfile")
+	File = filepath.Join(dir, "testfile")
 	defer os.RemoveAll(dir)
-	if err := ioutil.WriteFile(filepath, []byte(testFile), 0666); err != nil {
-		t.Fatalf("could not write temp %s\n", filepath)
+	if err := ioutil.WriteFile(File, []byte(testFile), 0666); err != nil {
+		t.Fatalf("could not write temp %s\n", File)
 	}
-	defer assertPanic(t, "parse")
-	Setup(filepath)
+	Load()
 	log.Printf("All is well!")
 }
 
@@ -72,10 +71,4 @@ pipeline:
 - echo "Hello, World"
 growl: true
 `, string(data))
-}
-
-func assertPanic(t *tt.T, what string) {
-	if r := recover(); r == nil {
-		t.Errorf(fmt.Sprintf("%s did not panic as expected", what))
-	}
 }

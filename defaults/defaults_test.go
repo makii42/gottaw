@@ -14,6 +14,7 @@ import (
 	"github.com/makii42/gottaw/output"
 	"github.com/stretchr/testify/assert"
 	"log"
+	c "github.com/makii42/gottaw/config"
 )
 
 var packageJsonContents = []byte("{name: \"nodepkg\"}")
@@ -24,8 +25,9 @@ var logger output.Logger
 var golang, nodeNpm, nodeYarn, javaMaven Default
 
 func TestMain(m *tt.M) {
-	// deps in trace - YES thats not quiet by default
-	logger = output.NewLogger()
+	cfg := &c.Config{}
+	l, err := output.NewLog(cfg)
+	logger = l
 	util = newDefaultsUtil(logger)
 
 	// test default objects
