@@ -10,7 +10,7 @@ excludes:
   - "*___jb_tmp___"
   - "*___jb_old___"
 pipeline:
-  - go get -v .
+  - go get -t -v ./...
   - go build -v .
   - go test -cover ./...
   - go install

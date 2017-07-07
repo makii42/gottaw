@@ -3,13 +3,27 @@ package pipeline
 import (
 	"os"
 	"os/exec"
-	"strings"
 	"time"
+
+	"io/ioutil"
+	"text/template"
 
 	"github.com/makii42/gottaw/output"
 )
 
+const scriptTmpl = `#!{{ .Shell }}
+{{ .Command }}`
+
+var (
+	tmpl *template.Template
+)
+
 type Executor func()
+
+type command struct {
+	Command string
+	Shell   string
+}
 
 type Pipeline struct {
 	pre      Executor
@@ -17,6 +31,14 @@ type Pipeline struct {
 	commands []string
 	wd       string
 	log      output.Logger
+}
+
+func init() {
+	t, err := template.New("script").Parse(scriptTmpl)
+	if err != nil {
+		panic(err)
+	}
+	tmpl = t
 }
 
 func NewPipeline(preProcess func(), l output.Logger, pipeline []string, postProcess func()) *Pipeline {
@@ -35,16 +57,25 @@ func (p Pipeline) Executor() Executor {
 			p.pre()
 		}
 		for i, commandStr := range p.commands {
-			elements := strings.Split(commandStr, " ")
-			command, elements := elements[0], elements[1:]
-			cmd := exec.Command(command, elements...)
+
+			file, err := ioutil.TempFile("/tmp", "gottaw-")
+			if err != nil {
+				panic(err)
+			}
+			defer os.Remove(file.Name())
+			cmdModel := command{Command: commandStr, Shell: "/bin/bash"}
+			tmpl.Execute(file, cmdModel)
+			if err := file.Close(); err != nil {
+				panic(err)
+			}
+
+			cmd := exec.Command("/bin/bash", file.Name())
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			if p.wd != "" {
 				cmd.Dir = p.wd
 			}
-			err := cmd.Start()
-			if err != nil {
+			if err := cmd.Start(); err != nil {
 				p.log.Errorf("🚨  (%d@?) ERROR starting '%s': %v", i, commandStr, err)
 				return
 			}
