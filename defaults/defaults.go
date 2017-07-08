@@ -1,16 +1,18 @@
 package defaults
 
 import (
+	"bufio"
+	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
+	"strings"
+
+	cli "gopkg.in/urfave/cli.v1"
+
 	c "github.com/makii42/gottaw/config"
 	"github.com/makii42/gottaw/output"
-	"gopkg.in/urfave/cli.v1"
-	"os"
-	"fmt"
-	"bufio"
-	"strings"
-	"io/ioutil"
 )
 
 // DefaultsCmd is the command that detects the type of environment
@@ -32,11 +34,9 @@ func defaults(cli *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	// test for a config being present - complain but continue if it's there
 	configFile, _ := filepath.Abs(cli.GlobalString("config"))
 	file, err := os.Stat(configFile)
-	if err != nil {
-		return err
-	}
 	if err == nil && file.Mode().IsRegular() {
 		fmt.Printf("Config file exists: %s\n", configFile)
 	}
@@ -105,8 +105,10 @@ func GuessDefault(path string, l output.Logger) Default {
 	return def
 }
 
+// DefaultGuesser is the type kicks of the matching if a folder matches an adequate default
 type DefaultGuesser []Default
 
+// Find on DefaultGuesser checks a folder for all available preset defaults
 func (d DefaultGuesser) Find(dir string) Default {
 	for _, candidate := range d {
 		if candidate.Test(dir) {
@@ -116,6 +118,7 @@ func (d DefaultGuesser) Find(dir string) Default {
 	return nil
 }
 
+// Default contains all matching logic and a template config for the default.
 type Default interface {
 	Name() string
 	Test(dir string) bool

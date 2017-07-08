@@ -11,13 +11,14 @@ import (
 
 	"fmt"
 
+	"log"
+
+	c "github.com/makii42/gottaw/config"
 	"github.com/makii42/gottaw/output"
 	"github.com/stretchr/testify/assert"
-	"log"
-	c "github.com/makii42/gottaw/config"
 )
 
-var packageJsonContents = []byte("{name: \"nodepkg\"}")
+var packageJSONContents = []byte("{name: \"nodepkg\"}")
 var tempRoot string
 var util *defaultsUtil
 var logger output.Logger
@@ -116,7 +117,7 @@ func createNodeYarnEnv(t *tt.T, tempRoot string) string {
 	if err != nil {
 		t.Fatal("could not create tempdir")
 	}
-	addFile(t, tmpDir, "package.json", packageJsonContents, 0666)
+	addFile(t, tmpDir, "package.json", packageJSONContents, 0666)
 	binFolder := addBinFolder(t, tmpDir)
 	addBin(t, binFolder, "node")
 	addBin(t, binFolder, "yarn")
@@ -128,7 +129,7 @@ func createNodeNpmEnv(t *tt.T, tempRoot string) string {
 	if err != nil {
 		t.Fatal("could not create temp dir")
 	}
-	addFile(t, tmpDir, "package.json", packageJsonContents, 0666)
+	addFile(t, tmpDir, "package.json", packageJSONContents, 0666)
 	binFolder := addBinFolder(t, tmpDir)
 	addBin(t, binFolder, "node")
 	addBin(t, binFolder, "npm")
@@ -140,8 +141,8 @@ func createGolangEnv(t *tt.T, tempRoot string) string {
 	if err != nil {
 		t.Fatal("could not create temp dir")
 	}
-	addFile(t, tmpDir, "main.go", packageJsonContents, 0666)
-	addFile(t, tmpDir, "foobar.go", packageJsonContents, 0666)
+	addFile(t, tmpDir, "main.go", packageJSONContents, 0666)
+	addFile(t, tmpDir, "foobar.go", packageJSONContents, 0666)
 	binFolder := addBinFolder(t, tmpDir)
 	addBin(t, binFolder, "go")
 	return tmpDir
