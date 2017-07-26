@@ -49,13 +49,13 @@ func Load() *Config {
 
 // Returns the loaded cfg file name.
 func (c *Config) GetConfigFile() string {
-	return c.file
+	return c.File
 }
 
 // Reloads this configuration. It will panic if an error occurs.
 func (c *Config) Reload() {
 	var err error
-	_, err = ParseConfig(c.file)
+	_, err = ParseConfig(c.File)
 	if err != nil {
 		panic(err)
 	}
@@ -70,7 +70,7 @@ func ParseConfig(cfgFile string) (*Config, error) {
 	if err := yaml.Unmarshal(source, &cfg); err != nil {
 		return nil, err
 	}
-	cfg.file = cfgFile
+	cfg.File = cfgFile
 	return cfg, nil
 }
 
