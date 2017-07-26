@@ -133,7 +133,7 @@ Some of the recent changes:
 - [x] Pre-define sensible defaults for various setups (go, node, ... )
 - [x] Server process auto-start/stop support
 - [x] Templating or some sort of substitution in command string 
-- [ ] Add flag to run the pipeline only once (watching stays default)
+- [x] Add flag to run the pipeline only once (watching stays default)
 - [ ] Add docker sidecar services, to keep e.g. a database running.
 - [ ] Enable global configuration for some flags/config values, like growl.
 
