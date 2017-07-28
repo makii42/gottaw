@@ -1,10 +1,10 @@
 package watch
 
 import (
-	"github.com/makii42/gottaw/output"
-	"gopkg.in/urfave/cli.v1"
-	pipeline2 "github.com/makii42/gottaw/pipeline"
 	"github.com/makii42/gottaw/config"
+	"github.com/makii42/gottaw/output"
+	"github.com/makii42/gottaw/pipeline"
+	"gopkg.in/urfave/cli.v1"
 )
 
 var OneRunCmd = cli.Command{
@@ -21,9 +21,8 @@ func oneRun(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	pipeline := pipeline2.NewPipeline(nil, log, cfg.Pipeline, func() {
+	pipeline.NewPipeline(nil, log, cfg.Pipeline, func() {
 		log.Noticef("Done with run.")
-	})
-	pipeline.Executor()()
+	}).Executor()()
 	return nil
 }
