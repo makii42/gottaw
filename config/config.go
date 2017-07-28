@@ -7,9 +7,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Config is the root config object
+// Config is the root cfg object
 type Config struct {
-	File             string   `yaml:",omitempty"`
+	file             string
 	WorkingDirectory string   `yaml:"workdir,omitempty"`
 	Excludes         []string `yaml:"excludes"`
 	Pipeline         []string `yaml:"pipeline"`
@@ -17,8 +17,17 @@ type Config struct {
 	Server           string   `yaml:"server,omitempty"`
 }
 
-func Setup(cfgFileRel string) *Config {
-	configFile, err := filepath.Abs(cfgFileRel)
+var (
+	cfg  *Config
+	File string
+)
+
+// Load bootstraps the cfg object with the cfg file.
+func Load() *Config {
+	if cfg != nil {
+		return cfg
+	}
+	configFile, err := filepath.Abs(File)
 	if err != nil {
 		panic(err)
 	}
@@ -29,17 +38,31 @@ func Setup(cfgFileRel string) *Config {
 	return cfg
 }
 
+// Returns the loaded cfg file name.
+func (c *Config) GetConfigFile() string {
+	return c.file
+}
+
+// Reloads this configuration. It will panic if an error occurs.
+func (c *Config) Reload() {
+	var err error
+	_, err = ParseConfig(c.file)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// ParseConfig reads and parses a cfg file.
 func ParseConfig(cfgFile string) (*Config, error) {
 	source, err := ioutil.ReadFile(cfgFile)
 	if err != nil {
 		return nil, err
 	}
-	var cfg Config
 	if err := yaml.Unmarshal(source, &cfg); err != nil {
 		return nil, err
 	}
-	cfg.File = cfgFile
-	return &cfg, nil
+	cfg.file = cfgFile
+	return cfg, nil
 }
 
 func SerializeConfig(cfg *Config) ([]byte, error) {

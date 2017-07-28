@@ -21,31 +21,31 @@ var defaultExcludes = []string{
 const foundMsg = "✅  found!"
 const notFoundMsg = "❌  not found!"
 
-func newDefaultsUtil(l *output.Logger) *defaultsUtil {
+func newDefaultsUtil(l output.Logger) *defaultsUtil {
 	return &defaultsUtil{l: l}
 }
 
 type defaultsUtil struct {
-	l *output.Logger
+	l output.Logger
 }
 
 func (def *defaultsUtil) fileExists(dir string, file string) bool {
 	abs := path.Join(dir, file)
 	def.l.Tracef("file '%s'? ", abs)
 	if info, err := os.Stat(abs); err == nil {
-		def.l.Traceln(foundMsg)
+		def.l.Tracef(foundMsg)
 		return info.Mode().IsRegular()
 	}
-	def.l.Traceln(notFoundMsg)
+	def.l.Tracef(notFoundMsg)
 	return false
 }
 func (def *defaultsUtil) dirExists(path string) bool {
 	def.l.Tracef("dir '%s'? ", path)
 	if info, err := os.Stat(path); err == nil {
-		def.l.Traceln(foundMsg)
+		def.l.Tracef(foundMsg)
 		return info.Mode().IsDir()
 	}
-	def.l.Traceln(notFoundMsg)
+	def.l.Tracef(notFoundMsg)
 	return false
 }
 func (def *defaultsUtil) isExecutable(names ...string) bool {
@@ -70,9 +70,9 @@ func (def *defaultsUtil) filesMatch(dir string, pattern string) bool {
 		panic(err)
 	}
 	if len(matches) > 0 {
-		def.l.Traceln(foundMsg)
+		def.l.Tracef(foundMsg)
 		return true
 	}
-	def.l.Traceln(notFoundMsg)
+	def.l.Tracef(notFoundMsg)
 	return false
 }

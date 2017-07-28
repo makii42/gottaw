@@ -90,7 +90,7 @@ executed. If want to execute the commands in a different folder, set a working d
 
     workdir: ./foo/bar
 
-## servrer command
+## server command
 
 Often you work on a server process that you obviously want to test after your build was 
 successful. `gottaw` does that for you as well! By specifying a `server` element in your 
@@ -132,6 +132,10 @@ Some of the recent changes:
 - [x] Growl support
 - [x] Pre-define sensible defaults for various setups (go, node, ... )
 - [x] Server process auto-start/stop support
+- [x] Templating or some sort of substitution in command string 
+- [x] Add flag to run the pipeline only once (watching stays default)
+- [ ] Add docker sidecar services, to keep e.g. a database running.
+- [ ] Enable global configuration for some flags/config values, like growl.
 
 Obviously it still needs a LOT of polish. I don't have a lot on the agenda 
 except optimizations. I'd be especially grateful if someone on Windows 

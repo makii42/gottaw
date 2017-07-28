@@ -33,6 +33,11 @@ func TestIsIgnoreIgnoresAllInDir(t *testing.T) {
 	assert.True(t, ignored)
 }
 
+func TestIsIgnoredIgnoresDeepFileSpec(t *testing.T) {
+	ignored := isIgnored("foo/bar/snae.cfg", cfgExcludes("foo/bar/snae.cfg"))
+	assert.True(t, ignored)
+}
+
 func TestIsIgnoreIgnoresAllInGitAsWeDontHaveDoubleStar(t *testing.T) {
 	c := cfgExcludes("./.git/*/*")
 	ignored := isIgnored("./.git/hooks/bas", c)

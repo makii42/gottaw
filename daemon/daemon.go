@@ -32,7 +32,7 @@ type daemon struct {
 
 // NewDaemon creates a new Daemon that can be started and
 // stopped using the interface methods.
-func NewDaemon(l *output.Logger, cmdStr string) Daemon {
+func NewDaemon(cmdStr string) Daemon {
 	elements := strings.Split(cmdStr, " ")
 	command, elements := elements[0], elements[1:]
 	return &daemon{

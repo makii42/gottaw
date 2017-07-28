@@ -11,21 +11,24 @@ import (
 
 	"fmt"
 
-	"github.com/makii42/gottaw/config"
+	"log"
+
+	c "github.com/makii42/gottaw/config"
 	"github.com/makii42/gottaw/output"
 	"github.com/stretchr/testify/assert"
 )
 
-var packageJsonContents = []byte("{name: \"nodepkg\"}")
+var packageJSONContents = []byte("{name: \"nodepkg\"}")
 var tempRoot string
 var util *defaultsUtil
-var logger *output.Logger
+var logger output.Logger
 
 var golang, nodeNpm, nodeYarn, javaMaven Default
 
 func TestMain(m *tt.M) {
-	// deps in trace - YES thats not quiet by default
-	logger = output.NewLogger(output.TRACE, &config.Config{})
+	cfg := &c.Config{}
+	l, err := output.NewLog(cfg)
+	logger = l
 	util = newDefaultsUtil(logger)
 
 	// test default objects
@@ -45,9 +48,9 @@ func TestMain(m *tt.M) {
 	// create and rollback path
 	originalPath := os.Getenv("PATH")
 	os.Setenv("PATH", "")
-	fmt.Printf("FIXED PATH '%s'", os.Getenv("PATH"))
+	log.Printf("FIXED PATH '%s'", os.Getenv("PATH"))
 	defer os.Setenv("PATH", originalPath)
-
+	log.Printf("setup done, starting run")
 	result := m.Run()
 	os.Exit(result)
 }
@@ -114,7 +117,7 @@ func createNodeYarnEnv(t *tt.T, tempRoot string) string {
 	if err != nil {
 		t.Fatal("could not create tempdir")
 	}
-	addFile(t, tmpDir, "package.json", packageJsonContents, 0666)
+	addFile(t, tmpDir, "package.json", packageJSONContents, 0666)
 	binFolder := addBinFolder(t, tmpDir)
 	addBin(t, binFolder, "node")
 	addBin(t, binFolder, "yarn")
@@ -126,7 +129,7 @@ func createNodeNpmEnv(t *tt.T, tempRoot string) string {
 	if err != nil {
 		t.Fatal("could not create temp dir")
 	}
-	addFile(t, tmpDir, "package.json", packageJsonContents, 0666)
+	addFile(t, tmpDir, "package.json", packageJSONContents, 0666)
 	binFolder := addBinFolder(t, tmpDir)
 	addBin(t, binFolder, "node")
 	addBin(t, binFolder, "npm")
@@ -138,8 +141,8 @@ func createGolangEnv(t *tt.T, tempRoot string) string {
 	if err != nil {
 		t.Fatal("could not create temp dir")
 	}
-	addFile(t, tmpDir, "main.go", packageJsonContents, 0666)
-	addFile(t, tmpDir, "foobar.go", packageJsonContents, 0666)
+	addFile(t, tmpDir, "main.go", packageJSONContents, 0666)
+	addFile(t, tmpDir, "foobar.go", packageJSONContents, 0666)
 	binFolder := addBinFolder(t, tmpDir)
 	addBin(t, binFolder, "go")
 	return tmpDir
