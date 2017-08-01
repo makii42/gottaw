@@ -21,11 +21,17 @@ func TestMain(m *tt.M) {
 	os.Exit(m.Run())
 }
 
-func TestSidecarRunnerCreation(t *tt.T) {
+func TestSidecarRunnerCreationWithEmptyList(t *tt.T) {
 	sidecarCfg := make(map[string]c.Sidecar)
 	r, err := NewRunner(logger, sidecarCfg)
-	if err != nil {
-		assert.Nil(t, err)
+	assert.Nil(t, err)
+	assert.NotNil(t, r)
+}
+func TestSidecarRunnerCreationWithSideCar(t *tt.T) {
+	sidecarCfg := map[string]c.Sidecar{
+		"foo": c.Sidecar{},
 	}
+	r, err := NewRunner(logger, sidecarCfg)
+	assert.Nil(t, err)
 	assert.NotNil(t, r)
 }

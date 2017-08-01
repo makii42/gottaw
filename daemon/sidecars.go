@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	t "github.com/docker/docker/api/types"
 	d "github.com/docker/docker/client"
 
 	c "github.com/makii42/gottaw/config"
@@ -35,6 +36,7 @@ type SidecarRunner struct {
 	dockerClient *d.Client
 	log          o.Logger
 	config       c.Sidecar
+	containers   []t.Container
 }
 
 type sidecar struct {
@@ -59,13 +61,10 @@ func NewRunner(l o.Logger, sidecarCfg map[string]c.Sidecar) (*SidecarRunner, err
 }
 
 func (sr *SidecarRunner) Start() error {
+
 	return nil
 }
 
 func (sr *SidecarRunner) Stop() error {
-	return nil
-}
-
-func (scr *SidecarRunner) Reload(sidcarCfg map[string]c.Sidecar) error {
 	return nil
 }
