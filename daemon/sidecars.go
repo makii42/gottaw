@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"bytes"
 	"context"
 	"log"
 
@@ -35,12 +36,23 @@ type Sidecar interface {
 type SidecarRunner struct {
 	dockerClient *d.Client
 	log          o.Logger
-	config       c.Sidecar
-	containers   []t.Container
+	config       map[string]c.Sidecar
+	sides        []*sidecar
 }
 
 type sidecar struct {
-	image string
+	name      string
+	image     string
+	logs      *bytes.Buffer
+	container *t.Container
+}
+
+func (sc *sidecar) Start() {
+
+}
+
+func (sc *sidecar) Stop() {
+
 }
 
 // NewRunner returns a Runner that gives you control over all sidecars.
@@ -52,16 +64,26 @@ func NewRunner(l o.Logger, sidecarCfg map[string]c.Sidecar) (*SidecarRunner, err
 	scr := SidecarRunner{
 		dockerClient: cli,
 	}
-
+	var sidecars []*sidecar
 	for name, scconf := range sidecarCfg {
 		l.Tracef("%s: %v", name, scconf)
+		sidecar := &sidecar{
+			name:      name,
+			image:     scconf.Image,
+			logs:      &bytes.Buffer{},
+			container: nil,
+		}
+		sidecars = append(sidecars, sidecar)
 	}
+	scr.sides = sidecars
 
 	return &scr, nil
 }
 
 func (sr *SidecarRunner) Start() error {
+	for sc := range sr.config {
 
+	}
 	return nil
 }
 
