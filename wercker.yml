@@ -4,14 +4,24 @@ build:
     - setup-go-workspace:
       package-dir:  github.com/makii42/gottaw
     - script:
-        name: go get
+        name: set up build environment and tools
         code: |
-          go get -t ./...
+          go get github.com/golang/mock/gomock
+          go get github.com/golang/mock/mockgen
+          go get github.com/Masterminds/glide
+    - script:
+        name: install code deps
+        code: |
+          glide i -v
+    - script:
+        name: generate code
+        code: |
+          go generate $(glide novendor)
     - script:
         name: go build
         code: |
-          go build ./...
+          go build .
     - script:
         name: go test
         code: |
-          go test ./...
+          go test $(glide novendor)
