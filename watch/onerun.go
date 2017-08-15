@@ -7,6 +7,7 @@ import (
 	"gopkg.in/urfave/cli.v1"
 )
 
+// OneRunCmd is the command to run a pipeline once.
 var OneRunCmd = cli.Command{
 	Name:    "one",
 	Aliases: []string{"1"},
@@ -21,8 +22,19 @@ func oneRun(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	pipeline.NewPipeline(nil, log, cfg.Pipeline, func() {
-		log.Noticef("Done with run.")
-	}).Executor()()
+	builder := pipeline.NewBuilder(cfg, log)
+	executor, err := builder.Executor(nil, func(r pipeline.BuildResult) {
+		var resMsg string
+		if r == pipeline.BuildSuccess {
+			resMsg = "succeeded"
+		} else {
+			resMsg = "failed"
+		}
+		log.Noticef("The build %s.\n", resMsg)
+	})
+	if err != nil {
+		return err
+	}
+	executor()
 	return nil
 }

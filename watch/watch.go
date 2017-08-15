@@ -5,15 +5,18 @@ import (
 	"path/filepath"
 	"time"
 
+	"fmt"
+
 	"github.com/makii42/gottaw/config"
 	"github.com/makii42/gottaw/daemon"
+	"github.com/makii42/gottaw/output"
 	"github.com/makii42/gottaw/pipeline"
 	"gopkg.in/fsnotify.v1"
 	"gopkg.in/urfave/cli.v1"
-	"github.com/makii42/gottaw/output"
-	"fmt"
 )
 
+// WatchCmd is the command that starts a watching files in the project folder
+// and triggers the pipeline once a relevant change did happen.
 var WatchCmd = cli.Command{
 	Name:   "watch",
 	Usage:  "starts watching folder(s)",
@@ -23,7 +26,7 @@ var WatchCmd = cli.Command{
 
 var log output.Logger
 
-// WatchIt does the work
+// watchIt does the work
 func watchIt(c *cli.Context) error {
 	cfg := config.Load()
 	_log, err := output.NewLog(cfg)
@@ -48,6 +51,7 @@ func watchIt(c *cli.Context) error {
 		return fmt.Errorf("error while accessing tracking root %s", trackingRoot)
 	}
 	var serverd daemon.Daemon
+	builder := pipeline.NewBuilder(cfg, log)
 
 	done := make(chan bool)
 	go func() {
@@ -79,6 +83,7 @@ func watchIt(c *cli.Context) error {
 				} else if ev.Op&fsnotify.Write == fsnotify.Write && cfg.GetConfigFile() == ev.Name {
 					cfg.Reload()
 					log.Triggerf("🛠  reloaded config '%s'\n", cfg.GetConfigFile())
+
 				} else if timer == nil {
 					log.Triggerf("🔎  change detected: %s\n", ev.Name)
 				}
@@ -87,19 +92,23 @@ func watchIt(c *cli.Context) error {
 					log.Triggerf("🔎  even more changes detected: %s\n", ev.Name)
 					timer.Reset(delay)
 				} else {
-					pl := pipeline.NewPipeline(func() {
+					executor, err := builder.Executor(func() {
 						if serverd != nil {
 							if err := serverd.Stop(); err != nil {
 								panic(err)
 							}
 						}
-					}, log, cfg.Pipeline, func() {
+					}, func(r pipeline.BuildResult) {
 						timer = nil
-						if serverd != nil {
+						if r == pipeline.BuildSuccess && serverd != nil {
 							serverd.Start()
 						}
 					})
-					timer = time.AfterFunc(delay, pl.Executor())
+					if err != nil {
+						log.Errorf("error creating build executor: %#v", err)
+					} else {
+						timer = time.AfterFunc(delay, executor)
+					}
 				}
 
 			case err := <-tracker.Errors():
@@ -115,14 +124,14 @@ func watchIt(c *cli.Context) error {
 	if cfg.Server != "" {
 		serverd = daemon.NewDaemon(cfg.Server)
 	}
-	pl := pipeline.NewPipeline(nil, log, cfg.Pipeline, func() {
-		if serverd != nil {
+	executor, err := builder.Executor(nil, func(r pipeline.BuildResult) {
+		if r == pipeline.BuildSuccess && serverd != nil {
 			if err := serverd.Start(); err != nil {
 				panic(err)
 			}
 		}
 	})
-	pl.Executor()()
+	executor()
 	<-done
 	return nil
 }

@@ -4,15 +4,25 @@ import (
 	"bytes"
 	"context"
 	"log"
+	"time"
 
 	t "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	d "github.com/docker/docker/client"
-
-	c "github.com/makii42/gottaw/config"
-	o "github.com/makii42/gottaw/output"
 )
 
-var client *d.Client
+var (
+	client  *d.Client
+	timeout *time.Duration
+)
+
+func init() {
+	tmpTimeout, err := time.ParseDuration("30s")
+	if err != nil {
+		panic(err)
+	}
+	timeout = &tmpTimeout
+}
 
 func ensureDockerClient() (*d.Client, error) {
 	cli, err := d.NewEnvClient()
@@ -28,65 +38,59 @@ func ensureDockerClient() (*d.Client, error) {
 }
 
 // Sidecar describes a backend service for a build pipeline or server
-type Sidecar interface {
-	Start() error
-	Stop() error
-}
+type (
+	Sidecar interface {
+		Start(ctx *context.Context) error
+		Stop(ctx *context.Context) error
+		Reload(ctx *context.Context) error
+	}
 
-type SidecarRunner struct {
-	dockerClient *d.Client
-	log          o.Logger
-	config       map[string]c.Sidecar
-	sides        []*sidecar
-}
+	Docker interface {
+	}
 
-type sidecar struct {
-	name      string
-	image     string
-	logs      *bytes.Buffer
-	container *t.Container
-}
+	sidecar struct {
+		name        string
+		image       string
+		environment map[string]string
+		logs        *bytes.Buffer
+		containerID string
+	}
+)
 
-func (sc *sidecar) Start() {
-
-}
-
-func (sc *sidecar) Stop() {
-
-}
-
-// NewRunner returns a Runner that gives you control over all sidecars.
-func NewRunner(l o.Logger, sidecarCfg map[string]c.Sidecar) (*SidecarRunner, error) {
-	cli, err := ensureDockerClient()
+func (sc *sidecar) Start(ctx context.Context) error {
+	container, err := client.ContainerCreate(
+		ctx,
+		&container.Config{
+			Image:        sc.image,
+			AttachStdout: true,
+			AttachStderr: true,
+		},
+		&container.HostConfig{},
+		nil,
+		sc.name,
+	)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	scr := SidecarRunner{
-		dockerClient: cli,
-	}
-	var sidecars []*sidecar
-	for name, scconf := range sidecarCfg {
-		l.Tracef("%s: %v", name, scconf)
-		sidecar := &sidecar{
-			name:      name,
-			image:     scconf.Image,
-			logs:      &bytes.Buffer{},
-			container: nil,
-		}
-		sidecars = append(sidecars, sidecar)
-	}
-	scr.sides = sidecars
-
-	return &scr, nil
-}
-
-func (sr *SidecarRunner) Start() error {
-	for sc := range sr.config {
-
+	sc.containerID = container.ID
+	err = client.ContainerStart(
+		ctx,
+		container.ID,
+		t.ContainerStartOptions{},
+	)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func (sr *SidecarRunner) Stop() error {
+func (sc *sidecar) Stop(ctx context.Context) error {
+	if err := client.ContainerStop(ctx, sc.containerID, timeout); err != nil {
+		return err
+	}
+	if err := client.ContainerRemove(ctx, sc.containerID, t.ContainerRemoveOptions{}); err != nil {
+		return err
+	}
+	sc.containerID = ""
 	return nil
 }
