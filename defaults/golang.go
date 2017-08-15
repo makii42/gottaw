@@ -28,6 +28,7 @@ func (g GolangDefault) Config(dir string) *c.Config {
 		Excludes: append(
 			defaultExcludes,
 			"*-go-tmp-umask",
+			"vendor",
 		),
 		Pipeline: []string{
 			"go get -v .",

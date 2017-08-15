@@ -5,12 +5,15 @@ excludes:
   - .git
   - .idea
   - .vscode
+  - vendor
   - .gitrecinfo
   - .wercker
+  - mocks
+  - "*/*_mocks.go"
   - "*___jb_tmp___"
   - "*___jb_old___"
 pipeline:
-  - go get -t -v ./...
-  - go build -v .
-  - go test -cover ./...
-  - go install
+  - glide i -v
+  - go generate $(glide novendor)
+  - go test -cover $(glide novendor)
+  - go build .

@@ -10,6 +10,13 @@ os:
   - linux
   - osx
 before_install:
+  - go get github.com/golang/mock/gomock
+  - go get github.com/golang/mock/mockgen
+  - go get github.com/Masterminds/glide
   - go get github.com/mattn/goveralls
+install: 
+  - glide install --strip-vendor
+before_script: 
+  - go generate $(glide novendor)
 script:
   - $HOME/gopath/bin/goveralls -service=travis-ci

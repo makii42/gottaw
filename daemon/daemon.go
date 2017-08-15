@@ -11,7 +11,9 @@ import (
 )
 
 // Daemon is the interface to a background process that is
-// started after a successful pipeline execution
+// started after a successful pipeline execution. When a rebuild
+// is triggered, the daemon will be stopped and restarted again
+// after a successful execution.
 type Daemon interface {
 	// Start is the trigger to kick of the daemon. Returns an
 	// error if the Start fails or if it is running already

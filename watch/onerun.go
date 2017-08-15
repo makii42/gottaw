@@ -1,12 +1,13 @@
 package watch
 
 import (
-	"github.com/makii42/gottaw/output"
-	"gopkg.in/urfave/cli.v1"
-	pipeline2 "github.com/makii42/gottaw/pipeline"
 	"github.com/makii42/gottaw/config"
+	"github.com/makii42/gottaw/output"
+	"github.com/makii42/gottaw/pipeline"
+	"gopkg.in/urfave/cli.v1"
 )
 
+// OneRunCmd is the command to run a pipeline once.
 var OneRunCmd = cli.Command{
 	Name:    "one",
 	Aliases: []string{"1"},
@@ -21,9 +22,19 @@ func oneRun(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	pipeline := pipeline2.NewPipeline(nil, log, cfg.Pipeline, func() {
-		log.Noticef("Done with run.")
+	builder := pipeline.NewBuilder(cfg, log)
+	executor, err := builder.Executor(nil, func(r pipeline.BuildResult) {
+		var resMsg string
+		if r == pipeline.BuildSuccess {
+			resMsg = "succeeded"
+		} else {
+			resMsg = "failed"
+		}
+		log.Noticef("The build %s.\n", resMsg)
 	})
-	pipeline.Executor()()
+	if err != nil {
+		return err
+	}
+	executor()
 	return nil
 }

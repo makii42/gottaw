@@ -18,20 +18,18 @@ var (
 	tmpl *template.Template
 )
 
-type Executor func()
+type (
+	command struct {
+		Command string
+		Shell   string
+	}
 
-type command struct {
-	Command string
-	Shell   string
-}
-
-type Pipeline struct {
-	pre      Executor
-	post     Executor
-	commands []string
-	wd       string
-	log      output.Logger
-}
+	pipeline struct {
+		commands []string
+		wd       string
+		log      output.Logger
+	}
+)
 
 func init() {
 	t, err := template.New("script").Parse(scriptTmpl)
@@ -41,31 +39,37 @@ func init() {
 	tmpl = t
 }
 
-func NewPipeline(preProcess func(), l output.Logger, pipeline []string, postProcess func()) *Pipeline {
-	return &Pipeline{
-		commands: pipeline,
-		pre:      preProcess,
-		post:     postProcess,
+func newPipeline(l output.Logger, commands []string) *pipeline {
+	return &pipeline{
+		commands: commands,
 		log:      l,
 	}
 }
 
-func (p Pipeline) Executor() Executor {
+func (p pipeline) Executor(pre PreFunc, post PostFunc) Executor {
 	return func() {
+		result := BuildSuccess
 		start := time.Now()
-		if p.pre != nil {
-			p.pre()
+		if pre != nil {
+			pre()
 		}
+		defer func() {
+			if post != nil {
+				post(result)
+			}
+		}()
 		for i, commandStr := range p.commands {
 
 			file, err := ioutil.TempFile("/tmp", "gottaw-")
 			if err != nil {
+				result = BuildFailure
 				panic(err)
 			}
 			defer os.Remove(file.Name())
 			cmdModel := command{Command: commandStr, Shell: "/bin/bash"}
 			tmpl.Execute(file, cmdModel)
 			if err := file.Close(); err != nil {
+				result = BuildFailure
 				panic(err)
 			}
 
@@ -77,20 +81,19 @@ func (p Pipeline) Executor() Executor {
 			}
 			if err := cmd.Start(); err != nil {
 				p.log.Errorf("🚨  (%d@?) ERROR starting '%s': %v", i, commandStr, err)
+				result = BuildFailure
 				return
 			}
 			pid := cmd.Process.Pid
 			p.log.Noticef("♻  (%d@%d) started '%s'\n", i, pid, commandStr)
 			if err := cmd.Wait(); err != nil {
 				p.log.Errorf("🚨  (%d@%d) ERROR: %s \n", i, pid, err)
+				result = BuildFailure
 				return
 			}
 			p.log.Noticef("♻  (%d@%d) done\n", i, pid)
 		}
 		dur := time.Since(start)
 		p.log.Successf("✅  Pipeline done after %s\n", dur.String())
-		if p.post != nil {
-			p.post()
-		}
 	}
 }

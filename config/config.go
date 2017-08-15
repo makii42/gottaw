@@ -9,12 +9,21 @@ import (
 
 // Config is the root cfg object
 type Config struct {
-	file             string
-	WorkingDirectory string   `yaml:"workdir,omitempty"`
-	Excludes         []string `yaml:"excludes"`
-	Pipeline         []string `yaml:"pipeline"`
-	Growl            bool     `yaml:"growl,omitempty"`
-	Server           string   `yaml:"server,omitempty"`
+	File             string             `yaml:",omitempty"`
+	WorkingDirectory string             `yaml:"workdir,omitempty"`
+	Excludes         []string           `yaml:"excludes"`
+	Pipeline         []string           `yaml:"pipeline"`
+	Growl            bool               `yaml:"growl,omitempty"`
+	Server           string             `yaml:"server,omitempty"`
+	Sidecars         map[string]Sidecar `yaml:"sidecars,omitempty"`
+}
+
+// Sidecar defines a background ("sidecar") service that is kept running
+type Sidecar struct {
+	Image       string            `yaml:"image"`
+	Environment map[string]string `yaml:"env,omitempty"`
+	Script      string            `yaml:"script,omitempty"`
+	Volumes     map[string]string `yaml:"volumes,omitempty"`
 }
 
 var (
@@ -40,13 +49,13 @@ func Load() *Config {
 
 // Returns the loaded cfg file name.
 func (c *Config) GetConfigFile() string {
-	return c.file
+	return c.File
 }
 
 // Reloads this configuration. It will panic if an error occurs.
 func (c *Config) Reload() {
 	var err error
-	_, err = ParseConfig(c.file)
+	_, err = ParseConfig(c.File)
 	if err != nil {
 		panic(err)
 	}
@@ -61,7 +70,7 @@ func ParseConfig(cfgFile string) (*Config, error) {
 	if err := yaml.Unmarshal(source, &cfg); err != nil {
 		return nil, err
 	}
-	cfg.file = cfgFile
+	cfg.File = cfgFile
 	return cfg, nil
 }
 

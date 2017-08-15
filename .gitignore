@@ -1,2 +1,5 @@
 gottaw*
+vendor
 .wercker
+mocks/*go
+*_mocks.go
