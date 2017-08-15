@@ -4,15 +4,14 @@ import (
 	"bytes"
 	"context"
 
-	d "github.com/docker/docker/client"
-
 	c "github.com/makii42/gottaw/config"
+	"github.com/makii42/gottaw/docker"
 	o "github.com/makii42/gottaw/output"
 )
 
 type (
 	sidecarRunner struct {
-		dockerClient *d.Client
+		dockerClient docker.Client
 		log          o.Logger
 		config       map[string]c.Sidecar
 		sides        []*sidecar
@@ -25,7 +24,7 @@ type (
 
 // NewRunner returns a Runner that gives you control over all sidecars.
 func NewRunner(l o.Logger, sidecarCfg map[string]c.Sidecar) (Runner, error) {
-	cli, err := ensureDockerClient()
+	cli, err := docker.NewClient()
 	if err != nil {
 		return nil, err
 	}

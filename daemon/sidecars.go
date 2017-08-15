@@ -3,16 +3,15 @@ package daemon
 import (
 	"bytes"
 	"context"
-	"log"
 	"time"
 
 	t "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
-	d "github.com/docker/docker/client"
+	"github.com/makii42/gottaw/docker"
 )
 
 var (
-	client  *d.Client
+	client  docker.Client
 	timeout *time.Duration
 )
 
@@ -22,19 +21,6 @@ func init() {
 		panic(err)
 	}
 	timeout = &tmpTimeout
-}
-
-func ensureDockerClient() (*d.Client, error) {
-	cli, err := d.NewEnvClient()
-	if err != nil {
-		return nil, err
-	}
-	ping, err := cli.Ping(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	log.Printf("Connected to Docker API version: %s", ping.APIVersion)
-	return cli, nil
 }
 
 // Sidecar describes a backend service for a build pipeline or server
