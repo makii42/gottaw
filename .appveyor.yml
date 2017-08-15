@@ -12,6 +12,7 @@ platform:
 build: off
 
 install: 
+  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
   - go version
   - go env
   - go get github.com/golang/mock/gomock
