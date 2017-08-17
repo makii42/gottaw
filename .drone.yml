@@ -3,8 +3,8 @@ workspace:
   path: src/github.com/makii42/gottaw
 
 pipeline:
-  prepare: 
-    image: golang
+  build:
+    image: golang:1.7
     commands: 
       - go get github.com/golang/mock/gomock
       - go get github.com/golang/mock/mockgen
