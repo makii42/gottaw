@@ -9,11 +9,11 @@ os:
   - linux
   - osx
 before_install:
-  - go get github.com/golang/mock/gomock
-  - go get github.com/golang/mock/mockgen
-  - go get github.com/Masterminds/glide
-  - go get github.com/mattn/goveralls
-  - go get github.com/golang/dep
+  - go get -u -v github.com/golang/mock/gomock
+  - go get -u -v github.com/golang/mock/mockgen
+  - go get -u -v github.com/Masterminds/glide
+  - go get -u -v github.com/mattn/goveralls
+  - go get -u -v github.com/golang/dep/cmd/dep
 install: 
   - dep ensure
 before_script: 
