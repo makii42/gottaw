@@ -9,10 +9,12 @@ build:
           go get github.com/golang/mock/gomock
           go get github.com/golang/mock/mockgen
           go get github.com/Masterminds/glide
+          go get github.com/golang/dep
+
     - script:
         name: install code deps
         code: |
-          glide i -v
+          dep ensure
     - script:
         name: generate code
         code: |

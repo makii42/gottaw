@@ -5,7 +5,7 @@ excludes:
   - .git
   - .idea
   - .vscode
-  - vendor
+  - vendor*
   - .gitrecinfo
   - .wercker
   - mocks
@@ -13,7 +13,7 @@ excludes:
   - "*___jb_tmp___"
   - "*___jb_old___"
 pipeline:
-  - glide i -v
-  - go generate $(glide novendor)
+  - dep ensure
+  - go generate ./...
   - go test -cover $(glide novendor)
   - go build .

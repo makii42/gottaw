@@ -18,14 +18,11 @@ install:
   - go get github.com/golang/mock/gomock
   - go get github.com/golang/mock/mockgen
   - go get github.com/Masterminds/glide
-  - glide i -v
-  # no subshell on windows, is there?
-  - go generate ./config/... ./daemon/... ./defaults/... ./docker/... ./output/... ./pipeline/... ./watch/... . 
+  - go get github.com/golang/dep
+  - dep ensure
+  - go generate $(glide novendor)
 
 test_script: 
-  # no subshell on windows, is there? 
-  # Check it out at https://stackoverflow.com/questions/434038/whats-the-cmd-powershell-equivalent-of-back-tick-on-bash
-  # Not sure if appveyor runs powershell
-  - go test -v -cover ./config/... ./daemon/... ./defaults/... ./docker/... ./output/... ./pipeline/... ./watch/... . 
+  - go test -v -cover $(glide novendor)
   - go build -v .
   - gottaw.exe defaults

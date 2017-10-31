@@ -7,12 +7,21 @@ import (
 
 	"fmt"
 
+	"github.com/briandowns/spinner"
 	"github.com/makii42/gottaw/config"
 	"github.com/makii42/gottaw/daemon"
 	"github.com/makii42/gottaw/output"
 	"github.com/makii42/gottaw/pipeline"
 	"gopkg.in/fsnotify.v1"
 	"gopkg.in/urfave/cli.v1"
+)
+
+var (
+	spinnerWorkChars  = spinner.CharSets[11]
+	spinnerWorkSuffix = "   executing pipeline"
+	spinnerWaitChars  = spinner.CharSets[38]
+	spinnerWaitSuffix = "   waiting for changes"
+	log               output.Logger
 )
 
 // WatchCmd is the command that starts a watching files in the project folder
@@ -23,8 +32,6 @@ var WatchCmd = cli.Command{
 	Action: watchIt,
 	Flags:  []cli.Flag{},
 }
-
-var log output.Logger
 
 // watchIt does the work
 func watchIt(c *cli.Context) error {
@@ -53,7 +60,9 @@ func watchIt(c *cli.Context) error {
 	var serverd daemon.Daemon
 	builder := pipeline.NewBuilder(cfg, log)
 
+	var spin *spinner.Spinner
 	done := make(chan bool)
+
 	go func() {
 		var timer *time.Timer
 		for {
@@ -98,11 +107,17 @@ func watchIt(c *cli.Context) error {
 								panic(err)
 							}
 						}
+						spin.UpdateCharSet(spinnerWorkChars)
+						spin.Suffix = spinnerWorkSuffix
+						spin.Restart()
 					}, func(r pipeline.BuildResult) {
 						timer = nil
 						if r == pipeline.BuildSuccess && serverd != nil {
 							serverd.Start()
 						}
+						spin.UpdateCharSet(spinnerWaitChars)
+						spin.Suffix = spinnerWaitSuffix
+						spin.Restart()
 					})
 					if err != nil {
 						log.Errorf("error creating build executor: %#v", err)
@@ -124,12 +139,19 @@ func watchIt(c *cli.Context) error {
 	if cfg.Server != "" {
 		serverd = daemon.NewDaemon(cfg.Server)
 	}
-	executor, err := builder.Executor(nil, func(r pipeline.BuildResult) {
+	executor, err := builder.Executor(func() {
+		spin = spinner.New(spinnerWorkChars, 200*time.Millisecond)
+		spin.Suffix = spinnerWorkSuffix
+		spin.Start()
+	}, func(r pipeline.BuildResult) {
 		if r == pipeline.BuildSuccess && serverd != nil {
 			if err := serverd.Start(); err != nil {
 				panic(err)
 			}
 		}
+		spin.UpdateCharSet(spinnerWaitChars)
+		spin.Suffix = spinnerWaitSuffix
+		spin.Restart()
 	})
 	executor()
 	<-done

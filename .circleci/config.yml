@@ -6,7 +6,7 @@ jobs:
   build:
     docker:
       # specify the version
-      - image: circleci/golang:1.8
+      - image: circleci/golang:1.9
       
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -25,7 +25,8 @@ jobs:
       - run: go get github.com/Masterminds/glide
       - run: go get github.com/golang/mock/gomock
       - run: go get github.com/golang/mock/mockgen
-      - run: glide install --strip-vendor
+      - run: go get github.com/golang/dep
+      - run: dep ensure
       - run: go generate $(glide novendor)
       - run: go test -v $(glide novendor)
       - run: go build .
