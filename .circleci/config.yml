@@ -22,10 +22,10 @@ jobs:
       - checkout
 
       # specify any bash command here prefixed with `run: `
-      - run: go get github.com/Masterminds/glide
-      - run: go get github.com/golang/mock/gomock
-      - run: go get github.com/golang/mock/mockgen
-      - run: go get github.com/golang/dep
+      - run: go get -u -v github.com/Masterminds/glide
+      - run: go get -u -v github.com/golang/mock/gomock
+      - run: go get -u -v github.com/golang/mock/mockgen
+      - run: go get -u -v github.com/golang/dep/cmd/dep
       - run: dep ensure
       - run: go generate $(glide novendor)
       - run: go test -v $(glide novendor)
