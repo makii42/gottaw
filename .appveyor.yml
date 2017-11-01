@@ -15,14 +15,14 @@ install:
   - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
   - go version
   - go env
-  - go get github.com/golang/mock/gomock
-  - go get github.com/golang/mock/mockgen
-  - go get github.com/Masterminds/glide
-  - go get github.com/golang/dep/cmd/dep
+  - go get -u -v github.com/golang/mock/gomock
+  - go get -u -v github.com/golang/mock/mockgen
+  - go get -u -v github.com/Masterminds/glide
+  - go get -u -v github.com/golang/dep/cmd/dep
   - dep ensure
-  - go generate $(glide novendor)
+  - go generate ./config/... ./daemon/... ./defaults/... ./docker/... ./output/... ./pipeline/... ./watch/... . 
 
 test_script: 
-  - go test -v -cover $(glide novendor)
+  - go test -v -cover ./config/... ./daemon/... ./defaults/... ./docker/... ./output/... ./pipeline/... ./watch/... . 
   - go build -v .
   - gottaw.exe defaults
