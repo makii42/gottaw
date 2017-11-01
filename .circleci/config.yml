@@ -3,6 +3,9 @@
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
 jobs:
+  generate: 
+    image: circleci/golang:1.9
+
   build:
     docker:
       # specify the version
@@ -34,3 +37,23 @@ jobs:
       - run: ./gottaw --help
       - run: ./gottaw defaults
       - run: gox -output="dist/{{.Dir}}_{{.OS}}_{{.Arch}}" --osarch="linux/386 linux/amd64 linux/arm darwin/386 darwin/amd64 windows/386 windows/adm64" 
+
+
+  dist:
+    docker:
+      - image: tsub/ghr
+    working_directory: /go/src/github.com/makii42/gottaw
+    steps: 
+      - checkout 
+      - run: ls -la
+      - run: ls -la ./dist/
+
+
+workflows:
+  version: 2
+  build-and-build-dist:
+    jobs: 
+      - build
+      - dist:
+        requires:
+          - build
