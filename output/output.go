@@ -1,38 +1,47 @@
 package output
 
 import (
+	"fmt"
+
 	n "github.com/0xAX/notificator"
+	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	c "github.com/makii42/gottaw/config"
-	"fmt"
 )
 
 type Level int
 
 var (
-	Trace, Quiet bool
+	Trace, Quiet      bool
+	spinnerWorkChars  = spinner.CharSets[11]
+	spinnerWorkSuffix = "   executing pipeline"
+	spinnerWaitChars  = spinner.CharSets[38]
+	spinnerWaitSuffix = "   waiting for changes"
 )
 
 const (
-	L_QUIET  Level = iota
+	L_QUIET Level = iota
 	L_NOTICE
 	L_TRACE
 )
 
-type log struct {
-	cfg                                        *c.Config
-	errors, notices, triggers, success, normal *color.Color
-	n                                          *n.Notificator
-	level                                      Level
-}
+type (
+	log struct {
+		cfg                                        *c.Config
+		errors, notices, triggers, success, normal *color.Color
+		n                                          *n.Notificator
+		level                                      Level
+		spin                                       *spinner.Spinner
+	}
 
-type Logger interface {
-	Errorf(format string, a ...interface{})
-	Noticef(format string, a ...interface{})
-	Triggerf(format string, a ...interface{})
-	Successf(format string, a ...interface{})
-	Tracef(format string, a ...interface{})
-}
+	Logger interface {
+		Errorf(format string, a ...interface{})
+		Noticef(format string, a ...interface{})
+		Triggerf(format string, a ...interface{})
+		Successf(format string, a ...interface{})
+		Tracef(format string, a ...interface{})
+	}
+)
 
 func (o *log) growl(title, msg, icon, urgency string) {
 	if o.n != nil {
@@ -76,6 +85,26 @@ func NewLog(cfg *c.Config) (Logger, error) {
 func (l *log) GetLog() Logger {
 	return l
 }
+
+/*
+
+		spin = spinner.New(spinnerWorkChars, 200*time.Millisecond)
+		spin.Suffix = spinnerWorkSuffix
+		spin.Start()
+
+				spin.UpdateCharSet(spinnerWaitChars)
+		spin.Suffix = spinnerWaitSuffix
+		spin.Restart()
+
+	spin.UpdateCharSet(spinnerWorkChars)
+	spin.Suffix = spinnerWorkSuffix
+	spin.Restart()
+
+	spin.UpdateCharSet(spinnerWaitChars)
+	spin.Suffix = spinnerWaitSuffix
+	spin.Restart()
+
+*/
 
 func (l *log) Errorf(format string, a ...interface{}) {
 	l.errors.Printf(format, a...)
