@@ -14,6 +14,6 @@ excludes:
   - "*___jb_old___"
 pipeline:
   - dep ensure
-  - go generate ./...
-  - go test -cover $(glide novendor)
+  - go generate $(go list ./...)
+  - go test -cover $(go list ./...)
   - go build .
