@@ -19,9 +19,9 @@ jobs:
       - run: ./gottaw defaults
       - run: gox -output="dist/{{.Dir}}_{{.OS}}_{{.Arch}}" --osarch="linux/386 linux/amd64 linux/arm darwin/386 darwin/amd64 windows/386 windows/adm64" 
       - persist_to_workspace:
-        root: ./dist
-        paths:
-          - "*"
+          root: ./dist
+          paths:
+            - "*"
 
   dist:
     docker:
@@ -29,7 +29,7 @@ jobs:
     working_directory: /go/src/github.com/makii42/gottaw
     steps: 
       - attach_workspace:
-        at: ./dist
+          at: ./dist
       - run: ls -la
       - run: ls -la ./dist/
 
