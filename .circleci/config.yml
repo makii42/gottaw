@@ -32,6 +32,8 @@ jobs:
           at: ./dist
       - run: ls -la
       - run: ls -la ./dist/
+      - run: cd dist && sha256 * | tee sha256sums.txt
+      - run: ghr -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` dist/
 
 workflows:
   version: 2
@@ -39,5 +41,8 @@ workflows:
     jobs: 
       - build
       - dist:
+          filters:
+            tags:
+              only: /^v.*/
           requires:
             - build
