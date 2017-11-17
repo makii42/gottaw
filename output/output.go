@@ -34,6 +34,7 @@ type (
 		spin                                       *spinner.Spinner
 	}
 
+	// Logger is the main interface for outputing things.
 	Logger interface {
 		Errorf(format string, a ...interface{})
 		Noticef(format string, a ...interface{})
@@ -49,6 +50,7 @@ func (o *log) growl(title, msg, icon, urgency string) {
 	}
 }
 
+// NewLog creates a new logger that handles output.
 func NewLog(cfg *c.Config) (Logger, error) {
 	var lvl Level
 
