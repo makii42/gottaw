@@ -6,18 +6,19 @@ jobs:
     working_directory: /go/src/github.com/makii42/gottaw
     steps:
       - checkout
-      - run: go get -u -v github.com/Masterminds/glide
-      - run: go get -u -v github.com/golang/mock/gomock
-      - run: go get -u -v github.com/golang/mock/mockgen
-      - run: go get -u -v github.com/golang/dep/cmd/dep
-      - run: go get -u -v github.com/mitchellh/gox
-      - run: dep ensure
+      - run: go get -u github.com/Masterminds/glide
+      - run: go get -u github.com/golang/mock/gomock
+      - run: go get -u github.com/golang/mock/mockgen
+      - run: go get -u github.com/golang/dep/cmd/dep
+      - run: go get -u github.com/mitchellh/gox
+      - run: dep ensure -v
       - run: go generate $(go list ./...)
       - run: go test -v $(go list ./...)
       - run: go build .
       - run: ./gottaw --help
       - run: ./gottaw defaults
       - run: gox -output="dist/{{.Dir}}_{{.OS}}_{{.Arch}}" --osarch="linux/386 linux/amd64 linux/arm darwin/386 darwin/amd64 windows/386 windows/adm64" 
+      - run: cd dist && sha256sum gottaw* | tee sha256sums.txt
       - persist_to_workspace:
           root: ./dist
           paths:
@@ -30,9 +31,8 @@ jobs:
     steps: 
       - attach_workspace:
           at: ./dist
-      - run: ls -la
       - run: ls -la ./dist/
-      - run: cd dist && sha256sum * | tee sha256sums.txt
+      - run: cd dist && sha256sum -c sha256sums.txt 
       - run: ghr -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace `git describe --tags` dist/
 
 workflows:
