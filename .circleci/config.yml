@@ -41,11 +41,11 @@ workflows:
     jobs: 
       - build
       - dist:
+          requires:
+            - build
+          context: org-global
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /v.*/
-          context: org-global
-          requires:
-            - build
+              only: /^v.*/
