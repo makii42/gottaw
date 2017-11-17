@@ -45,7 +45,7 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /^v.*/
+              only: /v.*/
           context: org-global
           requires:
             - build
