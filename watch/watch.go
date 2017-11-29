@@ -7,7 +7,6 @@ import (
 
 	"fmt"
 
-	"github.com/briandowns/spinner"
 	"github.com/makii42/gottaw/config"
 	"github.com/makii42/gottaw/daemon"
 	"github.com/makii42/gottaw/output"
@@ -56,7 +55,6 @@ func watchIt(c *cli.Context) error {
 	var serverd daemon.Daemon
 	builder := pipeline.NewBuilder(cfg, log)
 
-	var spin *spinner.Spinner
 	done := make(chan bool)
 
 	go func() {
@@ -103,17 +101,11 @@ func watchIt(c *cli.Context) error {
 								panic(err)
 							}
 						}
-						spin.UpdateCharSet(spinnerWorkChars)
-						spin.Suffix = spinnerWorkSuffix
-						spin.Restart()
 					}, func(r pipeline.BuildResult) {
 						timer = nil
 						if r == pipeline.BuildSuccess && serverd != nil {
 							serverd.Start()
 						}
-						spin.UpdateCharSet(spinnerWaitChars)
-						spin.Suffix = spinnerWaitSuffix
-						spin.Restart()
 					})
 					if err != nil {
 						log.Errorf("error creating build executor: %#v", err)
@@ -142,9 +134,6 @@ func watchIt(c *cli.Context) error {
 				panic(err)
 			}
 		}
-		spin.UpdateCharSet(spinnerWaitChars)
-		spin.Suffix = spinnerWaitSuffix
-		spin.Restart()
 	})
 	executor()
 	<-done
