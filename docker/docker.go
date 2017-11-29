@@ -6,7 +6,7 @@ import (
 	"io"
 	"time"
 
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/docker/docker/api/types"
 	t "github.com/docker/docker/api/types"
