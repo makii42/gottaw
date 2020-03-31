@@ -1,5 +1,4 @@
 language: go
-sudo: false
 go:
   - 1.11
   - 1.12
@@ -11,12 +10,8 @@ os:
 before_install:
   - go get -u github.com/golang/mock/gomock
   - go get -u github.com/golang/mock/mockgen
-  - go get -u github.com/Masterminds/glide
   - go get -u github.com/mattn/goveralls
-  - go get -u github.com/golang/dep/cmd/dep
-install: 
-  - dep ensure
 before_script: 
-  - go generate $(glide novendor)
+  - go generate ./...
 script:
   - $HOME/gopath/bin/goveralls -service=travis-ci
