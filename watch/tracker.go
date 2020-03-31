@@ -1,8 +1,8 @@
 package watch
 
 import (
+	"github.com/fsnotify/fsnotify"
 	c "github.com/makii42/gottaw/config"
-	"gopkg.in/fsnotify.v1"
 )
 
 // Tracker keeps track of file system changes, and let's you control

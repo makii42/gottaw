@@ -2,14 +2,11 @@ package watch
 
 import (
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
 
-	"gopkg.in/fsnotify.v1"
-
-	"os"
-
-	"path/filepath"
-
+	"github.com/fsnotify/fsnotify"
 	"github.com/makii42/gottaw/config"
 	"github.com/stretchr/testify/assert"
 )

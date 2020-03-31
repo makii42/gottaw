@@ -1,17 +1,16 @@
 package watch
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
-	"fmt"
-
+	"github.com/fsnotify/fsnotify"
 	"github.com/makii42/gottaw/config"
 	"github.com/makii42/gottaw/daemon"
 	"github.com/makii42/gottaw/output"
 	"github.com/makii42/gottaw/pipeline"
-	"gopkg.in/fsnotify.v1"
 	"gopkg.in/urfave/cli.v1"
 )
 
