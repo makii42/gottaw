@@ -1,0 +1,52 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.14
+      id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Get dependencies
+      run: |
+        go get -u github.com/golang/mock/gomock
+        go get -u github.com/golang/mock/mockgen
+        go get -u github.com/mitchellh/gox
+        go generate ./...
+        if [ -f Gopkg.toml ]; then
+            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+            dep ensure
+        fi
+
+    - name: Test
+      run: go test -v .
+
+    - name: Build
+      run: go build -v .
+    
+    - name: Print Help
+      run: ./gottaw --help
+    
+    - name: Run Defaults
+      run: ./gottaw defaults
+    
+    - name: Build-Dist
+      run: gox -output="dist/{{.Dir}}_{{.OS}}_{{.Arch}}" --osarch="linux/386 linux/amd64 linux/arm darwin/386 darwin/amd64 windows/386 windows/adm64"
+      
+    - name: Generate Checksums
+      run: cd dist && sha256sum gottaw* | tee sha256sums.txt
