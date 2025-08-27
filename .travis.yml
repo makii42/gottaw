@@ -6,7 +6,6 @@ go:
   - 1.14
 os: 
   - linux
-  - osx
 before_install:
   - go get -u github.com/golang/mock/gomock
   - go get -u github.com/golang/mock/mockgen
